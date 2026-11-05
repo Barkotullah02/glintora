@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/fragments :: head('Stock Overview')}"></head>
+<body class="admin-body">
+<div class="admin-shell">
+
+    <th:block th:replace="~{admin/fragments :: sidebar('inventory')}"></th:block>
+
+    <div class="admin-main">
+        <th:block th:replace="~{admin/fragments :: topbar}"></th:block>
+
+        <main class="admin-content">
+            <th:block th:replace="~{admin/fragments :: flash}"></th:block>
+
+            <nav class="crumbs" aria-label="Breadcrumb">
+                <a th:href="@{/admin}">Dashboard</a><span class="sep">/</span><span class="current">Stock overview</span>
+            </nav>
+
+            <div class="page-head">
+                <div>
+                    <h1 class="page-title">Stock overview</h1>
+                    <p class="page-desc">
+                        On hand − reserved = available. Publication status never changes stock.
+                    </p>
+                </div>
+                <div class="page-actions">
+                    <a class="btn btn-outline" th:href="@{/admin/movements}">
+                        <i class="fa-solid fa-arrow-right-arrow-left"></i> Movement log
+                    </a>
+                    <a class="btn btn-outline" th:href="@{/admin/reorder}">
+                        <i class="fa-solid fa-rotate"></i> Reorder planning
+                    </a>
+                </div>
+            </div>
+
+            <!-- Summary -->
+            <div class="summary-strip">
+                <div class="summary-item"><strong th:text="${#lists.size(rows)}">0</strong> Rows</div>
+                <div class="summary-item"><strong class="delta-up" th:text="${inCount}">0</strong> In stock</div>
+                <div class="summary-item"><strong style="color:var(--color-warning)" th:text="${lowCount}">0</strong> Low</div>
+                <div class="summary-item"><strong class="delta-down" th:text="${outCount}">0</strong> Out of stock</div>
+            </div>
+
+            <!-- Filters -->
+            <form class="filter-bar" method="get" th:action="@{/admin/inventory}">
+                <input class="input" type="search" name="q" th:value="${q}"
+                       placeholder="Search SKU or product…" aria-label="Search stock">
+                <select class="select" name="warehouse" aria-label="Warehouse">
+                    <option value="">All warehouses</option>
+                    <option th:each="w : ${warehouses}" th:value="${w.id}"
+                            th:selected="${warehouseFilter != null and warehouseFilter == w.id}"
+                            th:text="${w.name}">Warehouse</option>
+                </select>
+                <span class="filter-spacer"></span>
+                <span class="tabs" style="margin:0;">
+                    <a class="tab" th:classappend="${statusFilter == 'all'} ? 'active'"
+                       th:href="@{/admin/inventory(warehouse=${warehouseFilter}, q=${q})}">All</a>
+                    <a class="tab" th:classappend="${statusFilter == 'in'} ? 'active'"
+                       th:href="@{/admin/inventory(status='in', warehouse=${warehouseFilter}, q=${q})}">In</a>
+                    <a class="tab" th:classappend="${statusFilter == 'low'} ? 'active'"
+                       th:href="@{/admin/inventory(status='low', warehouse=${warehouseFilter}, q=${q})}">Low</a>
+                    <a class="tab" th:classappend="${statusFilter == 'out'} ? 'active'"
+                       th:href="@{/admin/inventory(status='out', warehouse=${warehouseFilter}, q=${q})}">Out</a>
+                </span>
+                <button class="btn btn-primary" type="submit"><i class="fa-solid fa-filter"></i> Apply</button>
+            </form>
+
+            <!-- Stock table -->
+            <section class="card mb-4" th:if="${!#lists.isEmpty(rows)}">
+                <div class="table-wrap">
+                    <table class="data">
+                        <thead>
+                        <tr>
+                            <th>Variant</th>
+                            <th>Warehouse</th>
+                            <th class="num">On hand</th>
+                            <th class="num">Reserved</th>
+                            <th class="num">Available</th>
+                            <th>Status</th>
+                            <th>Reorder</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="r : ${rows}">
+                            <td data-label="Variant" class="cell-block">
+                                <span class="cell-text">
+                                    <strong th:text="${r.productName}">Product</strong>
+                                    <span><span class="mono" th:text="${r.sku}">SKU</span>
+                                        · <span th:text="${r.sizeName} + ' / ' + ${r.colorName}">M / Black</span></span>
+                                </span>
+                            </td>
+                            <td data-label="Warehouse" th:text="${r.warehouseName}">Warehouse</td>
+                            <td data-label="On hand" class="num strong" th:text="${r.onHand}">0</td>
+                            <td data-label="Reserved" class="num muted" th:text="${r.reserved}">0</td>
+                            <td data-label="Available" class="num strong" th:text="${r.available}">0</td>
+                            <td data-label="Status">
+                                <span class="badge"
+                                      th:classappend="${r.status == 'in' ? 'badge-success' : (r.status == 'low' ? 'badge-warning' : 'badge-danger')}"
+                                      th:text="${r.status}">in</span>
+                            </td>
+                            <td data-label="Reorder">
+                                <span class="badge badge-accent" th:if="${r.reorderRequired}">required</span>
+                                <span class="muted" th:unless="${r.reorderRequired}">—</span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="card mb-4" th:if="${#lists.isEmpty(rows)}">
+                <div class="empty">
+                    <i class="fa-solid fa-box-open"></i>
+                    <strong>No stock rows match</strong>
+                    <p>Adjust the filters, or receive goods to create the first balance.</p>
+                </div>
+            </section>
+
+            <!-- Quick actions: receive + adjust -->
+            <div class="grid grid-2">
+
+                <section class="card">
+                    <div class="card-head">
+                        <h2>Receive stock</h2>
+                        <span class="card-sub">Accepted units only add to stock</span>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/admin/inventory/receive}" method="post">
+                            <div class="form-grid">
+                                <div class="field span-2">
+                                    <label for="recvVariant">Variant <span class="req">*</span></label>
+                                    <select class="select" id="recvVariant" name="variantId" required>
+                                        <option value="" disabled selected>Choose a variant…</option>
+                                        <option th:each="v : ${variants}" th:value="${v.id}" th:text="${v.label}">SKU — Product</option>
+                                    </select>
+                                </div>
+                                <div class="field">
+                                    <label for="recvWarehouse">Warehouse <span class="req">*</span></label>
+                                    <select class="select" id="recvWarehouse" name="warehouseId" required>
+                                        <option th:each="w : ${warehouses}" th:value="${w.id}" th:text="${w.name}">Warehouse</option>
+                                    </select>
+                                </div>
+                                <div class="field">
+                                    <label for="recvBy">Received by</label>
+                                    <input class="input" type="text" id="recvBy" name="receivedBy" placeholder="admin">
+                                </div>
+                                <div class="field">
+                                    <label for="recvQty">Quantity received <span class="req">*</span></label>
+                                    <input class="input" type="number" id="recvQty" name="quantityReceived"
+                                           min="1" value="1" required>
+                                </div>
+                                <div class="field">
+                                    <label for="rejQty">Quantity rejected</label>
+                                    <input class="input" type="number" id="rejQty" name="quantityRejected"
+                                           min="0" value="0">
+                                    <span class="hint">Rejected units are recorded but never added to stock.</span>
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button class="btn btn-success" type="submit">
+                                    <i class="fa-solid fa-box-open"></i> Record receipt
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <div class="card-head">
+                        <h2>Adjust stock</h2>
+                        <span class="card-sub">Positive adds, negative writes off</span>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/admin/inventory/adjust}" method="post"
+                              data-confirm="Post this adjustment to the movement log? Movements are append-only.">
+                            <div class="form-grid">
+                                <div class="field span-2">
+                                    <label for="adjustVariant">Variant <span class="req">*</span></label>
+                                    <select class="select" id="adjustVariant" name="variantId" required>
+                                        <option value="" disabled selected>Choose a variant…</option>
+                                        <option th:each="v : ${variants}" th:value="${v.id}" th:text="${v.label}">SKU — Product</option>
+                                    </select>
+                                </div>
+                                <div class="field">
+                                    <label for="adjustWarehouse">Warehouse <span class="req">*</span></label>
+                                    <select class="select" id="adjustWarehouse" name="warehouseId" required>
+                                        <option th:each="w : ${warehouses}" th:value="${w.id}" th:text="${w.name}">Warehouse</option>
+                                    </select>
+                                </div>
+                                <div class="field">
+                                    <label for="adjustType">Movement type</label>
+                                    <select class="select" id="adjustType" name="movementType">
+                                        <option value="">Auto (adjustment_in / adjustment_out)</option>
+                                        <option th:each="t : ${movementTypes}" th:value="${t}"
+                                                th:text="${t.name().replace('_', ' ')}">type</option>
+                                    </select>
+                                </div>
+                                <div class="field">
+                                    <label for="adjustDelta">Change <span class="req">*</span></label>
+                                    <input class="input" type="number" id="adjustDelta" name="delta"
+                                           value="0" required>
+                                    <span class="hint" id="adjustPreview">e.g. −3 for a count correction</span>
+                                </div>
+                                <div class="field span-2">
+                                    <label for="adjustReason">Reason <span class="req">*</span></label>
+                                    <input class="input" type="text" id="adjustReason" name="reason"
+                                           placeholder="Cycle count correction, damage, sample…" required>
+                                    <span class="hint">Stored on the append-only movement log with your name.</span>
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="fa-solid fa-pen-to-square"></i> Post adjustment
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <th:block th:replace="~{admin/fragments :: bottomNav('inventory')}"></th:block>
+    </div>
+</div>
+<th:block th:replace="~{admin/fragments :: scripts}"></th:block>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/fragments :: head('Customers')}"></head>
+<body class="admin-body">
+<div class="admin-shell">
+
+    <th:block th:replace="~{admin/fragments :: sidebar('customers')}"></th:block>
+
+    <div class="admin-main">
+        <th:block th:replace="~{admin/fragments :: topbar}"></th:block>
+
+        <main class="admin-content">
+            <th:block th:replace="~{admin/fragments :: flash}"></th:block>
+
+            <nav class="crumbs" aria-label="Breadcrumb">
+                <a th:href="@{/admin}">Dashboard</a><span class="sep">/</span>
+                <a th:href="@{/admin/orders}">Sales</a><span class="sep">/</span>
+                <span class="current">Customers</span>
+            </nav>
+
+            <div class="page-head">
+                <div>
+                    <h1 class="page-title">Customers</h1>
+                    <p class="page-desc">Everyone with a customer account, and what they have bought.</p>
+                </div>
+                <div class="page-actions">
+                    <form class="flex" style="gap:8px;" method="get" th:action="@{/admin/customers}">
+                        <input class="input" type="search" name="q" th:value="${q}"
+                               placeholder="Search name or email…" aria-label="Search customers"
+                               style="min-width:240px;">
+                        <button class="btn btn-primary" type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+                    </form>
+                </div>
+            </div>
+
+            <section class="card" th:if="${!#lists.isEmpty(customers)}">
+                <div class="table-wrap">
+                    <table class="data">
+                        <thead>
+                        <tr>
+                            <th>Customer</th>
+                            <th>Phone</th>
+                            <th class="num">Orders</th>
+                            <th class="num">Total spend</th>
+                            <th>Last order</th>
+                            <th>Member since</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="c : ${customers}">
+                            <td data-label="Customer" class="cell-block">
+                                <strong th:text="${c.name}">Customer</strong>
+                                <div class="small muted" th:text="${c.email}">email</div>
+                            </td>
+                            <td data-label="Phone" th:text="${c.phone != null ? c.phone : '—'}">—</td>
+                            <td data-label="Orders" class="num"
+                                th:text="${orderCounts[c.id] != null ? orderCounts[c.id] : 0}">0</td>
+                            <td data-label="Total spend" class="num strong"
+                                th:if="${spend[c.id] != null}"
+                                th:text="'৳' + ${#numbers.formatDecimal(spend[c.id], 1, 'COMMA', 2, 'POINT')}">—</td>
+                            <td data-label="Total spend" class="num muted" th:unless="${spend[c.id] != null}">—</td>
+                            <td data-label="Last order" class="small muted nowrap"
+                                th:text="${lastOrders[c.id] != null} ? ${lastOrders[c.id]} : '—'">—</td>
+                            <td data-label="Member since" class="small muted"
+                                th:text="${#temporals.format(c.createdAt, 'dd MMM yyyy')}">date</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="card" th:if="${#lists.isEmpty(customers)}">
+                <div class="empty">
+                    <i class="fa-solid fa-users"></i>
+                    <strong>No customers found</strong>
+                    <p>Customer accounts appear here once people register on the storefront.</p>
+                    <a class="btn btn-outline" th:if="${q != null}" th:href="@{/admin/customers}">Clear search</a>
+                </div>
+            </section>
+        </main>
+
+        <th:block th:replace="~{admin/fragments :: bottomNav('orders')}"></th:block>
+    </div>
+</div>
+<th:block th:replace="~{admin/fragments :: scripts}"></th:block>
+</body>
+</html>

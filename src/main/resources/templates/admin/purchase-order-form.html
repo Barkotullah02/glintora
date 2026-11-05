@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/fragments :: head('New Purchase Order')}"></head>
+<body class="admin-body">
+<div class="admin-shell">
+
+    <th:block th:replace="~{admin/fragments :: sidebar('purchase-orders')}"></th:block>
+
+    <div class="admin-main">
+        <th:block th:replace="~{admin/fragments :: topbar}"></th:block>
+
+        <main class="admin-content">
+            <th:block th:replace="~{admin/fragments :: flash}"></th:block>
+
+            <nav class="crumbs" aria-label="Breadcrumb">
+                <a th:href="@{/admin}">Dashboard</a><span class="sep">/</span>
+                <a th:href="@{/admin/purchase-orders}">Purchase orders</a><span class="sep">/</span>
+                <span class="current">New</span>
+            </nav>
+
+            <div class="page-head">
+                <div>
+                    <h1 class="page-title">New purchase order</h1>
+                    <p class="page-desc">
+                        Created as a <strong>draft</strong>. Send it to the supplier by moving it to “ordered” —
+                        stock still only changes when goods are received.
+                    </p>
+                </div>
+            </div>
+
+            <section class="card" style="max-width: 960px;">
+                <div class="card-body">
+                    <form th:action="@{/admin/purchase-orders}" method="post" data-protect>
+
+                        <div class="form-section">
+                            <h3>Order</h3>
+                            <div class="form-grid">
+                                <div class="field">
+                                    <label for="supplierId">Supplier <span class="req">*</span></label>
+                                    <select class="select" id="supplierId" name="supplierId" required>
+                                        <option value="" disabled selected>Choose a supplier…</option>
+                                        <option th:each="s : ${suppliers}" th:value="${s.id}" th:text="${s.name}">Supplier</option>
+                                    </select>
+                                </div>
+                                <div class="field">
+                                    <label for="expectedDate">Expected date</label>
+                                    <input class="input" type="date" id="expectedDate" name="expectedDate">
+                                    <span class="hint">When you expect the goods to arrive.</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Lines</h3>
+                            <div class="table-wrap">
+                                <table class="data">
+                                    <thead>
+                                    <tr>
+                                        <th style="width:46%;">Variant</th>
+                                        <th class="num">Quantity</th>
+                                        <th class="num">Unit cost (৳)</th>
+                                        <th></th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="poLines">
+
+                                    <tr>
+                                        <td data-label="Variant">
+                                            <select class="select" name="variantId">
+                                                <option value="">— choose —</option>
+                                                <option th:each="v : ${variants}" th:value="${v.id}" th:text="${v.label}">SKU</option>
+                                            </select>
+                                        </td>
+                                        <td data-label="Quantity">
+                                            <input class="input" type="number" name="quantity" min="1" placeholder="0">
+                                        </td>
+                                        <td data-label="Unit cost">
+                                            <input class="input" type="number" name="unitCost" step="0.01" min="0" placeholder="0.00">
+                                        </td>
+                                        <td class="right">
+                                            <button class="btn btn-ghost btn-sm line-remove" type="button" title="Clear line">
+                                                <i class="fa-solid fa-xmark"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td data-label="Variant">
+                                            <select class="select" name="variantId">
+                                                <option value="">— choose —</option>
+                                                <option th:each="v : ${variants}" th:value="${v.id}" th:text="${v.label}">SKU</option>
+                                            </select>
+                                        </td>
+                                        <td data-label="Quantity">
+                                            <input class="input" type="number" name="quantity" min="1" placeholder="0">
+                                        </td>
+                                        <td data-label="Unit cost">
+                                            <input class="input" type="number" name="unitCost" step="0.01" min="0" placeholder="0.00">
+                                        </td>
+                                        <td class="right">
+                                            <button class="btn btn-ghost btn-sm line-remove" type="button" title="Clear line">
+                                                <i class="fa-solid fa-xmark"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+
+                                    <!-- template row cloned by admin.js -->
+                                    <tr data-proto class="hidden">
+                                        <td data-label="Variant">
+                                            <select class="select" name="variantId" disabled>
+                                                <option value="">— choose —</option>
+                                                <option th:each="v : ${variants}" th:value="${v.id}" th:text="${v.label}">SKU</option>
+                                            </select>
+                                        </td>
+                                        <td data-label="Quantity">
+                                            <input class="input" type="number" name="quantity" min="1" placeholder="0" disabled>
+                                        </td>
+                                        <td data-label="Unit cost">
+                                            <input class="input" type="number" name="unitCost" step="0.01" min="0" placeholder="0.00" disabled>
+                                        </td>
+                                        <td class="right">
+                                            <button class="btn btn-ghost btn-sm line-remove" type="button" title="Clear line">
+                                                <i class="fa-solid fa-xmark"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="mt-3">
+                                <button class="btn btn-outline btn-sm" type="button" id="addPoLine">
+                                    <i class="fa-solid fa-plus"></i> Add line
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <a class="btn btn-ghost" th:href="@{/admin/purchase-orders}">Cancel</a>
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fa-solid fa-floppy-disk"></i> Save as draft
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+        </main>
+
+        <th:block th:replace="~{admin/fragments :: bottomNav('inventory')}"></th:block>
+    </div>
+</div>
+<th:block th:replace="~{admin/fragments :: scripts}"></th:block>
+</body>
+</html>

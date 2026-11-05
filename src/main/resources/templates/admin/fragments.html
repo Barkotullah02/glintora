@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+
+<!-- ============================================================== head -->
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title != null ? title + ' · Glintora Admin' : 'Glintora Admin'}">Glintora Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    <link th:href="@{/css/admin.css}" rel="stylesheet">
+</head>
+
+<!-- ====================================================== flash messages -->
+<div th:fragment="flash" th:if="${message != null or error != null}">
+    <div class="flash flash-success" th:if="${message != null}" role="status">
+        <i class="fa-solid fa-circle-check"></i>
+        <span th:text="${message}">Saved.</span>
+        <button class="flash-close" type="button" aria-label="Dismiss">&times;</button>
+    </div>
+    <div class="flash flash-error" th:if="${error != null}" role="alert">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span th:text="${error}">Something went wrong.</span>
+        <button class="flash-close" type="button" aria-label="Dismiss">&times;</button>
+    </div>
+</div>
+
+<!-- ======================================================= breadcrumbs -->
+<nav th:fragment="crumbs(items)" class="crumbs" aria-label="Breadcrumb"
+     th:if="${items != null and !#lists.isEmpty(items)}">
+    <template th:each="crumb : ${items}">
+        <a th:if="${crumb.href != null and !crumb.last}"
+           th:href="${crumb.href}" th:text="${crumb.label}">Parent</a>
+        <span th:if="${crumb.last}" class="current" th:text="${crumb.label}">Current</span>
+        <span class="sep" th:unless="${crumb.last}">/</span>
+    </template>
+</nav>
+
+<!-- ========================================================== sidebar -->
+<aside th:fragment="sidebar(active)" class="admin-sidebar" id="adminSidebar" aria-label="Main navigation">
+    <div class="admin-brand">
+        <a class="wordmark" th:href="@{/admin}">GLINTORA</a>
+        <span class="brand-tag">Admin</span>
+    </div>
+
+    <nav class="admin-nav">
+
+        <!-- OVERVIEW -->
+        <div class="nav-group" data-group="overview">
+            <button class="nav-group-label" type="button">
+                Overview <i class="fa-solid fa-chevron-down chevron"></i>
+            </button>
+            <ul class="nav-group-items">
+                <li class="nav-item">
+                    <a th:href="@{/admin}" th:classappend="${active == 'dashboard'} ? 'active'">
+                        <i class="fa-solid fa-chart-pie nav-icon"></i> Dashboard
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- CATALOG -->
+        <div class="nav-group" data-group="catalog">
+            <button class="nav-group-label" type="button">
+                Catalog <i class="fa-solid fa-chevron-down chevron"></i>
+            </button>
+            <ul class="nav-group-items">
+                <li class="nav-item">
+                    <a th:href="@{/admin/products}" th:classappend="${active == 'products'} ? 'active'">
+                        <i class="fa-solid fa-shirt nav-icon"></i> Products
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/admin/categories}" th:classappend="${active == 'categories'} ? 'active'">
+                        <i class="fa-solid fa-layer-group nav-icon"></i> Categories
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/admin/brands}" th:classappend="${active == 'brands'} ? 'active'">
+                        <i class="fa-solid fa-tag nav-icon"></i> Brands
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/admin/reviews}" th:classappend="${active == 'reviews'} ? 'active'">
+                        <i class="fa-solid fa-star nav-icon"></i> Product Reviews
+                        <span class="nav-count" th:if="${pendingReviewCount > 0}"
+                              th:text="${pendingReviewCount}">0</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- INVENTORY -->
+        <div class="nav-group" data-group="inventory">
+            <button class="nav-group-label" type="button">
+                Inventory <i class="fa-solid fa-chevron-down chevron"></i>
+            </button>
+            <ul class="nav-group-items">
+                <li class="nav-item">
+                    <a th:href="@{/admin/inventory}" th:classappend="${active == 'inventory'} ? 'active'">
+                        <i class="fa-solid fa-boxes-stacked nav-icon"></i> Stock Overview
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/admin/movements}" th:classappend="${active == 'movements'} ? 'active'">
+                        <i class="fa-solid fa-arrow-right-arrow-left nav-icon"></i> Stock Movements
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/admin/purchase-orders}" th:classappend="${active == 'purchase-orders'} ? 'active'">
+                        <i class="fa-solid fa-file-invoice nav-icon"></i> Purchase Orders
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/admin/suppliers}" th:classappend="${active == 'suppliers'} ? 'active'">
+                        <i class="fa-solid fa-truck-field nav-icon"></i> Suppliers
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/admin/shipments}" th:classappend="${active == 'shipments'} ? 'active'">
+                        <i class="fa-solid fa-ship nav-icon"></i> Incoming Shipments
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/admin/receiving}" th:classappend="${active == 'receiving'} ? 'active'">
+                        <i class="fa-solid fa-box-open nav-icon"></i> Goods Receiving
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/admin/warehouses}" th:classappend="${active == 'warehouses'} ? 'active'">
+                        <i class="fa-solid fa-warehouse nav-icon"></i> Warehouses
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/admin/reorder}" th:classappend="${active == 'reorder'} ? 'active'">
+                        <i class="fa-solid fa-rotate nav-icon"></i> Reorder Planning
+                        <span class="nav-count" th:if="${reorderCount > 0}"
+                              th:text="${reorderCount}">0</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- SALES -->
+        <div class="nav-group" data-group="sales">
+            <button class="nav-group-label" type="button">
+                Sales <i class="fa-solid fa-chevron-down chevron"></i>
+            </button>
+            <ul class="nav-group-items">
+                <li class="nav-item">
+                    <a th:href="@{/admin/orders}" th:classappend="${active == 'orders'} ? 'active'">
+                        <i class="fa-solid fa-receipt nav-icon"></i> Orders
+                        <span class="nav-count" th:if="${pendingOrderCount > 0}"
+                              th:text="${pendingOrderCount}">0</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/admin/customers}" th:classappend="${active == 'customers'} ? 'active'">
+                        <i class="fa-solid fa-users nav-icon"></i> Customers
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+    </nav>
+
+    <div style="padding: var(--space-3) var(--space-4); border-top: 1px solid var(--color-border);">
+        <a class="btn btn-outline btn-sm btn-block" th:href="@{/}">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i> View storefront
+        </a>
+    </div>
+</aside>
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+<!-- ========================================================== topbar -->
+<header th:fragment="topbar" class="admin-topbar">
+    <button class="icon-button menu-toggle" type="button" data-menu-toggle aria-label="Open navigation">
+        <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <form class="topbar-search" th:action="@{/admin/products}" method="get" role="search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="search" name="q" placeholder="Search products, codes, SKUs…"
+               th:value="${q}" aria-label="Search products">
+    </form>
+
+    <div class="topbar-spacer"></div>
+
+    <div class="topbar-user">
+        <div class="avatar" aria-hidden="true">GA</div>
+        <div class="who">
+            <strong sec:authentication="principal.username">admin@glintora.com</strong>
+            <span>Administrator</span>
+        </div>
+        <form th:action="@{/logout}" method="post" style="margin:0">
+            <button class="icon-button" type="submit" title="Sign out" aria-label="Sign out">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            </button>
+        </form>
+    </div>
+</header>
+
+<!-- ================================================ mobile bottom nav -->
+<nav th:fragment="bottomNav(active)" class="admin-bottom-nav" aria-label="Quick navigation">
+    <a th:href="@{/admin}" th:classappend="${active == 'dashboard'} ? 'active'">
+        <i class="fa-solid fa-chart-pie"></i> Home
+    </a>
+    <a th:href="@{/admin/inventory}" th:classappend="${active == 'inventory'} ? 'active'">
+        <i class="fa-solid fa-boxes-stacked"></i> Inventory
+    </a>
+    <a th:href="@{/admin/orders}" th:classappend="${active == 'orders'} ? 'active'">
+        <i class="fa-solid fa-receipt"></i> Orders
+    </a>
+    <button type="button" data-menu-toggle>
+        <i class="fa-solid fa-bars"></i> More
+    </button>
+</nav>
+
+<!-- ================================================== scripts -->
+<th:block th:fragment="scripts">
+    <script th:src="@{/js/admin.js}" defer></script>
+</th:block>
+
+</body>
+</html>

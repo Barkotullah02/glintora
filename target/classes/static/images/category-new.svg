@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" role="img" aria-label="New arrivals">
+  <defs>
+    <linearGradient id="nbg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F1EFEA"/>
+      <stop offset="1" stop-color="#E6E3DA"/>
+    </linearGradient>
+    <linearGradient id="ncloth" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#D8D3C6"/>
+      <stop offset="1" stop-color="#C6C0B0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="800" height="1000" fill="url(#nbg)"/>
+
+  <!-- hanging garment on a rail -->
+  <rect x="150" y="200" width="500" height="4" fill="#252525" opacity="0.7"/>
+  <g stroke="#252525" stroke-width="3" fill="none" opacity="0.55">
+    <path d="M330 204 q0 -34 30 -34 q30 0 30 34"/>
+    <path d="M440 204 q0 -34 30 -34 q30 0 30 34"/>
+  </g>
+
+  <!-- draped fabric panels -->
+  <path d="M290 210
+           c-40 0 -62 26 -70 66
+           l-30 470 h250
+           l-24 -470
+           c-8 -40 -30 -66 -70 -66 Z"
+        fill="url(#ncloth)"/>
+  <path d="M455 210
+           c-46 0 -70 30 -80 74
+           l-28 528 h268
+           l-26 -528
+           c-10 -44 -38 -74 -84 -74 Z"
+        fill="#87917C"/>
+
+  <!-- sage accent stitch -->
+  <g stroke="#F8F7F4" stroke-width="2" fill="none" opacity="0.6">
+    <path d="M400 320 v400 M380 350 l20 -16 20 16 M380 430 l20 -16 20 16 M380 510 l20 -16 20 16"/>
+  </g>
+
+  <ellipse cx="420" cy="790" rx="220" ry="18" fill="#252525" opacity="0.05"/>
+</svg>

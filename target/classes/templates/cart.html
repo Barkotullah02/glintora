@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Cart')}"></head>
+<body>
+
+<div th:replace="~{layout :: header}"></div>
+
+<div class="container" style="padding-top:48px; padding-bottom:96px; max-width:1040px;">
+    <p class="eyebrow">Your bag</p>
+    <h1 class="page-title">Shopping Cart</h1>
+
+    <!-- empty state -->
+    <div th:if="${lines.isEmpty()}" class="panel" style="text-align:center; padding:80px 24px;">
+        <p class="text-soft" style="margin-bottom:24px;">Your cart is empty — the collection is waiting.</p>
+        <a th:href="@{/shop}" class="btn btn-primary">Continue shopping</a>
+    </div>
+
+    <div th:unless="${lines.isEmpty()}" class="checkout-layout" style="grid-template-columns:minmax(0,8fr) minmax(0,4fr);">
+        <!-- line items -->
+        <div>
+            <div class="line-item" th:each="line : ${lines}">
+                <a th:href="@{/shop/product/{code}(code=${line.productCode})}">
+                    <img class="line-thumb" th:src="${line.imageUrl}" th:alt="${line.productName}">
+                </a>
+                <div>
+                    <h3 class="line-title">
+                        <a th:href="@{/shop/product/{code}(code=${line.productCode})}"
+                           th:text="${line.productName}">Product</a>
+                    </h3>
+                    <div class="line-meta">
+                        <span th:text="${line.sizeName} ?: 'One size'">M</span>
+                        <span th:if="${line.colorName != null}" th:text="' / ' + ${line.colorName}"> / Black</span>
+                        <span> · </span>
+                        <span th:text="${line.sku}">SKU</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+                        <form th:action="@{/cart/update}" method="post" class="qty-mini" data-qty>
+                            <input type="hidden" name="variantId" th:value="${line.variantId}">
+                            <button type="button" data-qty-minus aria-label="Decrease">−</button>
+                            <input type="number" name="quantity" min="0" max="20"
+                                   th:value="${line.quantity}" aria-label="Quantity">
+                            <button type="button" data-qty-plus aria-label="Increase">+</button>
+                            <button type="submit">Update</button>
+                        </form>
+                        <form th:action="@{/cart/remove}" method="post">
+                            <input type="hidden" name="variantId" th:value="${line.variantId}">
+                            <button type="submit" class="text-link">Remove</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="line-price" th:text="'৳' + ${#numbers.formatDecimal(line.lineTotal(), 1, 'COMMA', 2, 'POINT')}">৳0</div>
+            </div>
+        </div>
+
+        <!-- summary -->
+        <aside class="panel summary-card">
+            <h4 class="pdp-label" style="margin-bottom:16px;">Order summary</h4>
+            <div class="summary-row total" style="border-top:0; margin-top:0; padding-top:0;">
+                <span>Subtotal</span>
+                <span th:text="'৳' + ${#numbers.formatDecimal(subtotal, 1, 'COMMA', 2, 'POINT')}">৳0</span>
+            </div>
+            <p class="text-faint" style="font-size:12px; margin:4px 0 16px;"
+               th:if="${subtotal.compareTo(shippingOver) < 0}">
+                Add <span th:text="'৳' + ${shippingOver.subtract(subtotal)}">৳0</span> more for free shipping.
+            </p>
+            <p class="text-faint" style="font-size:12px; margin:4px 0 16px;" th:unless="${subtotal.compareTo(shippingOver) < 0}">
+                You qualify for free shipping.
+            </p>
+            <a th:href="@{/checkout}" class="btn btn-primary btn-block btn-lg">Checkout</a>
+            <a th:href="@{/shop}" class="btn btn-block" style="margin-top:8px;">Continue shopping</a>
+        </aside>
+    </div>
+</div>
+
+<div th:replace="~{layout :: footer}"></div>
+<div th:replace="~{layout :: scripts}"></div>
+</body>
+</html>

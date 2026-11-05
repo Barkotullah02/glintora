@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/fragments :: head('Products')}"></head>
+<body class="admin-body">
+<div class="admin-shell">
+
+    <th:block th:replace="~{admin/fragments :: sidebar('products')}"></th:block>
+
+    <div class="admin-main">
+        <th:block th:replace="~{admin/fragments :: topbar}"></th:block>
+
+        <main class="admin-content">
+            <th:block th:replace="~{admin/fragments :: flash}"></th:block>
+
+            <nav class="crumbs" aria-label="Breadcrumb">
+                <a th:href="@{/admin}">Dashboard</a><span class="sep">/</span><span class="current">Products</span>
+            </nav>
+
+            <div class="page-head">
+                <div>
+                    <h1 class="page-title">Products</h1>
+                    <p class="page-desc">Manage the catalogue. Publication status never changes stock — stock comes from inventory movements.</p>
+                </div>
+                <div class="page-actions">
+                    <a class="btn btn-primary" th:href="@{/admin/products/new}">
+                        <i class="fa-solid fa-plus"></i> New product
+                    </a>
+                </div>
+            </div>
+
+            <!-- Summary indicators (guide §5) -->
+            <div class="summary-strip">
+                <div class="summary-item"><strong th:text="${totalProducts}">0</strong> Total</div>
+                <div class="summary-item"><strong th:text="${publishedCount}">0</strong> Published</div>
+                <div class="summary-item"><strong th:text="${draftCount}">0</strong> Draft</div>
+                <div class="summary-item"><strong th:text="${pendingCount}">0</strong> Pending review</div>
+                <div class="summary-item"><strong class="delta-down" th:text="${outOfStockCount}">0</strong> Out of stock</div>
+            </div>
+
+            <!-- Filters -->
+            <form class="filter-bar" method="get" th:action="@{/admin/products}" id="productFilters">
+                <input class="input" type="search" name="q" th:value="${q}"
+                       placeholder="Search name, code, SKU or brand…" aria-label="Search products">
+                <select class="select" name="category" aria-label="Category">
+                    <option value="">All categories</option>
+                    <option th:each="c : ${categories}" th:value="${c.id}"
+                            th:selected="${categoryFilter != null and categoryFilter == c.id}"
+                            th:text="${c.name}">Category</option>
+                </select>
+                <select class="select" name="brand" aria-label="Brand">
+                    <option value="">All brands</option>
+                    <option th:each="b : ${brands}" th:value="${b.id}"
+                            th:selected="${brandFilter != null and brandFilter == b.id}"
+                            th:text="${b.name}">Brand</option>
+                </select>
+                <select class="select" name="status" aria-label="Status">
+                    <option value="">Any status</option>
+                    <option th:each="s : ${T(com.glintora.backend.model.enums.ProductStatus).values()}"
+                            th:value="${s}" th:selected="${statusFilter != null and statusFilter == s.name()}"
+                            th:text="${s.name().replace('_', ' ')}">status</option>
+                </select>
+                <span class="filter-spacer"></span>
+                <button class="btn btn-primary" type="submit"><i class="fa-solid fa-filter"></i> Apply</button>
+                <a class="btn btn-ghost" th:if="${q != null or categoryFilter != null or brandFilter != null or statusFilter != null}"
+                   th:href="@{/admin/products}">Clear</a>
+            </form>
+
+            <div class="flex-between mb-3">
+                <span class="small muted" th:text="${#lists.size(products)} + ' products shown'">0 products shown</span>
+            </div>
+
+            <!-- Product table -->
+            <section class="card" th:if="${!#lists.isEmpty(products)}">
+                <div class="table-wrap">
+                    <table class="data">
+                        <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Brand</th>
+                            <th>Category</th>
+                            <th class="num">Variants</th>
+                            <th class="num">Price</th>
+                            <th class="num">Available stock</th>
+                            <th>Publication</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="p : ${products}">
+                            <td data-label="Product" class="cell-block">
+                                <div class="cell-main">
+                                    <img class="cell-thumb" th:if="${!#lists.isEmpty(p.images)}"
+                                         th:src="${p.images[0].imageUrl}" th:alt="${p.name}" loading="lazy">
+                                    <span class="cell-thumb placeholder" th:if="${#lists.isEmpty(p.images)}">
+                                        <i class="fa-solid fa-shirt"></i>
+                                    </span>
+                                    <span class="cell-text">
+                                        <strong th:text="${p.name}">Product</strong>
+                                        <span class="mono" th:text="${p.productCode}">CODE</span>
+                                    </span>
+                                </div>
+                            </td>
+                            <td data-label="Brand" th:text="${p.brand != null ? p.brand.name : '—'}">Brand</td>
+                            <td data-label="Category" th:text="${p.category != null ? p.category.name : '—'}">Category</td>
+                            <td data-label="Variants" class="num" th:text="${#lists.size(p.variants)}">0</td>
+                            <td data-label="Price" class="num strong"
+                                th:if="${p.defaultSellingPrice != null}"
+                                th:text="'৳' + ${#numbers.formatDecimal(p.defaultSellingPrice, 1, 'COMMA', 2, 'POINT')}">৳0</td>
+                            <td data-label="Price" class="num" th:if="${p.defaultSellingPrice == null}">—</td>
+                            <td data-label="Available stock" class="num">
+                                <span th:text="${availableByProduct[p.id]}">0</span>
+                                <span class="badge badge-danger" th:if="${availableByProduct[p.id] <= 0}">out</span>
+                            </td>
+                            <td data-label="Publication">
+                                <span class="badge"
+                                      th:classappend="${p.status.name() == 'published' ? 'badge-success' : (p.status.name() == 'draft' ? 'badge-muted' : ((p.status.name() == 'discontinued' or p.status.name() == 'hidden') ? 'badge-danger' : 'badge-warning'))}"
+                                      th:text="${p.status.name().replace('_', ' ')}">draft</span>
+                            </td>
+                            <td data-label="" class="right">
+                                <div class="row-actions">
+                                    <a class="btn btn-outline btn-sm" th:href="@{/admin/products/{id}/edit(id=${p.id})}">
+                                        <i class="fa-solid fa-pen"></i> Edit
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="card" th:if="${#lists.isEmpty(products)}">
+                <div class="empty">
+                    <i class="fa-solid fa-shirt"></i>
+                    <strong>No products match your filters</strong>
+                    <p>Try a different search term, or clear the filters to see the whole catalogue.</p>
+                    <a class="btn btn-outline" th:if="${q != null or categoryFilter != null or brandFilter != null or statusFilter != null}"
+                       th:href="@{/admin/products}">Clear filters</a>
+                    <a class="btn btn-primary" th:if="${q == null and categoryFilter == null and brandFilter == null and statusFilter == null}"
+                       th:href="@{/admin/products/new}"><i class="fa-solid fa-plus"></i> New product</a>
+                </div>
+            </section>
+        </main>
+
+        <th:block th:replace="~{admin/fragments :: bottomNav('products')}"></th:block>
+    </div>
+</div>
+<th:block th:replace="~{admin/fragments :: scripts}"></th:block>
+</body>
+</html>

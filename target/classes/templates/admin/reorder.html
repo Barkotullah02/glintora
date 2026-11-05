@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/fragments :: head('Reorder Planning')}"></head>
+<body class="admin-body">
+<div class="admin-shell">
+
+    <th:block th:replace="~{admin/fragments :: sidebar('reorder')}"></th:block>
+
+    <div class="admin-main">
+        <th:block th:replace="~{admin/fragments :: topbar}"></th:block>
+
+        <main class="admin-content">
+            <th:block th:replace="~{admin/fragments :: flash}"></th:block>
+
+            <nav class="crumbs" aria-label="Breadcrumb">
+                <a th:href="@{/admin}">Dashboard</a><span class="sep">/</span>
+                <a th:href="@{/admin/inventory}">Inventory</a><span class="sep">/</span>
+                <span class="current">Reorder planning</span>
+            </nav>
+
+            <div class="page-head">
+                <div>
+                    <h1 class="page-title">Reorder planning</h1>
+                    <p class="page-desc">
+                        Suggested quantity = max(0, target − (available + incoming on order)).
+                        Creating a suggestion produces a <strong>draft</strong> purchase order — nothing is ordered automatically.
+                    </p>
+                </div>
+                <div class="page-actions">
+                    <a class="btn btn-outline" th:href="@{/admin/purchase-orders}">
+                        <i class="fa-solid fa-file-invoice"></i> Purchase orders
+                    </a>
+                </div>
+            </div>
+
+            <div class="summary-strip">
+                <div class="summary-item"><strong th:text="${#lists.size(lines)}">0</strong> Suggestions</div>
+                <div class="summary-item">
+                    <strong th:text="${#lists.size(suppliers)}">0</strong> Suppliers available
+                </div>
+            </div>
+
+            <section class="card" th:if="${!#lists.isEmpty(lines)}">
+                <div class="table-wrap">
+                    <table class="data">
+                        <thead>
+                        <tr>
+                            <th>Variant</th>
+                            <th class="num">On hand</th>
+                            <th class="num">Reserved</th>
+                            <th class="num">Available</th>
+                            <th class="num">Incoming</th>
+                            <th class="num">Reorder point</th>
+                            <th class="num">Target</th>
+                            <th class="num">Suggested</th>
+                            <th>Create draft PO</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="line : ${lines}">
+                            <td data-label="Variant" class="cell-block">
+                                <span class="cell-text">
+                                    <strong th:text="${line.productName}">Product</strong>
+                                    <span><span class="mono" th:text="${line.sku}">SKU</span>
+                                        · <span th:text="${line.sizeName} + ' / ' + ${line.colorName}">M / Black</span></span>
+                                </span>
+                            </td>
+                            <td data-label="On hand" class="num" th:text="${line.onHand}">0</td>
+                            <td data-label="Reserved" class="num muted" th:text="${line.reserved}">0</td>
+                            <td data-label="Available" class="num strong" th:text="${line.available}">0</td>
+                            <td data-label="Incoming" class="num muted" th:text="${line.outstandingOrdered}">0</td>
+                            <td data-label="Reorder point" class="num" th:text="${line.reorderPoint}">0</td>
+                            <td data-label="Target" class="num" th:text="${line.targetQuantity}">0</td>
+                            <td data-label="Suggested" class="num">
+                                <span class="badge badge-warning" th:text="${line.suggestedReorderQty}">0</span>
+                            </td>
+                            <td data-label="Create draft PO">
+                                <form th:action="@{/admin/reorder/draft-po}" method="post"
+                                      class="flex" style="gap:8px; flex-wrap:wrap;">
+                                    <input type="hidden" name="ruleId" th:value="${line.ruleId}">
+                                    <select class="select" name="supplierId" required
+                                            style="min-width:150px; min-height:32px; font-size:12.5px;">
+                                        <option value="" disabled selected>Supplier…</option>
+                                        <option th:each="s : ${suppliers}" th:value="${s.id}" th:text="${s.name}">Supplier</option>
+                                    </select>
+                                    <input class="input" type="number" name="quantity" min="1"
+                                           th:value="${line.suggestedReorderQty}"
+                                           style="width:80px; min-height:32px; font-size:12.5px; text-align:right;"
+                                           th:title="'Suggested: ' + ${line.suggestedReorderQty}">
+                                    <button class="btn btn-accent btn-sm" type="submit">
+                                        <i class="fa-solid fa-file-circle-plus"></i> Draft PO
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="card" th:if="${#lists.isEmpty(lines)}">
+                <div class="empty">
+                    <i class="fa-regular fa-circle-check"></i>
+                    <strong>Nothing to reorder</strong>
+                    <p>Every variant is above its reorder point. Suggestions appear here automatically.</p>
+                    <a class="btn btn-outline" th:href="@{/admin/inventory}">Open stock overview</a>
+                </div>
+            </section>
+        </main>
+
+        <th:block th:replace="~{admin/fragments :: bottomNav('inventory')}"></th:block>
+    </div>
+</div>
+<th:block th:replace="~{admin/fragments :: scripts}"></th:block>
+</body>
+</html>

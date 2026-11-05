@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800" viewBox="0 0 600 800">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3d3a33"/>
+      <stop offset="100%" stop-color="#5c5648"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="800" fill="url(#g)"/>
+  <g transform="translate(300 360)" fill="none" stroke="#d9c893" stroke-width="6" opacity="0.9">
+    <path d="M-95 -70 L-95 -130 L95 -130 L95 -70 L60 -45 L45 -60 L45 140 L-45 140 L-45 -60 L-60 -45 Z"/>
+    <line x1="0" y1="-60" x2="0" y2="140"/>
+  </g>
+  <text x="300" y="600" text-anchor="middle" font-family="Segoe UI, sans-serif"
+        font-size="24" fill="#f1f3f5" letter-spacing="4">CLASSIC PANJABI</text>
+  <text x="300" y="636" text-anchor="middle" font-family="Segoe UI, sans-serif"
+        font-size="16" fill="#adb5bd">GLI-002</text>
+</svg>

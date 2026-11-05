@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/fragments :: head('Dashboard')}"></head>
+<body class="admin-body">
+<div class="admin-shell">
+
+    <th:block th:replace="~{admin/fragments :: sidebar('dashboard')}"></th:block>
+
+    <div class="admin-main">
+        <th:block th:replace="~{admin/fragments :: topbar}"></th:block>
+
+        <main class="admin-content">
+            <th:block th:replace="~{admin/fragments :: flash}"></th:block>
+
+            <div class="page-head">
+                <div>
+                    <h1 class="page-title">Dashboard</h1>
+                    <p class="page-desc">
+                        Last <span th:text="${stats.periodDays}">30</span> days ·
+                        updated <span th:text="${#temporals.format(#temporals.createNow(), 'dd MMM yyyy, HH:mm')}">now</span>
+                    </p>
+                </div>
+                <div class="page-actions">
+                    <nav class="range-picker" aria-label="Date range">
+                        <a th:href="@{/admin(days=7)}" th:classappend="${days == 7} ? 'active'">7 days</a>
+                        <a th:href="@{/admin(days=30)}" th:classappend="${days == 30} ? 'active'">30 days</a>
+                        <a th:href="@{/admin(days=90)}" th:classappend="${days == 90} ? 'active'">90 days</a>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- KPI cards (guide §4) -->
+            <div class="grid grid-4 mb-4">
+
+                <a class="kpi" th:href="@{/admin/orders}">
+                    <div class="kpi-label">Revenue <i class="fa-solid fa-bangladeshi-taka-sign"></i></div>
+                    <div class="kpi-value"
+                         th:text="'৳' + ${#numbers.formatDecimal(stats.revenue, 1, 'COMMA', 2, 'POINT')}">৳0</div>
+                    <div class="kpi-meta">
+                        <span th:if="${stats.revenueChangePct() != null}"
+                              th:classappend="${stats.revenueChangePct().signum() >= 0} ? 'delta-up' : 'delta-down'"
+                              th:text="${(stats.revenueChangePct().signum() >= 0 ? '+' : '') + stats.revenueChangePct() + '%'}">+0%</span>
+                        <span>vs previous <span th:text="${stats.periodDays}">30</span> days</span>
+                    </div>
+                </a>
+
+                <a class="kpi" th:href="@{/admin/orders}">
+                    <div class="kpi-label">Orders <i class="fa-solid fa-receipt"></i></div>
+                    <div class="kpi-value" th:text="${stats.orderCount}">0</div>
+                    <div class="kpi-meta">
+                        <span th:if="${stats.orderChangePct() != null}"
+                              th:classappend="${stats.orderChangePct().signum() >= 0} ? 'delta-up' : 'delta-down'"
+                              th:text="${(stats.orderChangePct().signum() >= 0 ? '+' : '') + stats.orderChangePct() + '%'}">+0%</span>
+                        <span th:text="'previous period: ' + stats.previousOrderCount">previous period: 0</span>
+                    </div>
+                </a>
+
+                <a class="kpi" th:href="@{/admin/inventory}">
+                    <div class="kpi-label">Inventory value <i class="fa-solid fa-boxes-stacked"></i></div>
+                    <div class="kpi-value"
+                         th:text="'৳' + ${#numbers.formatDecimal(stats.inventoryValue, 1, 'COMMA', 2, 'POINT')}">৳0</div>
+                    <div class="kpi-meta"><span>valued at cost price</span></div>
+                </a>
+
+                <a class="kpi" th:href="@{/admin/reorder}">
+                    <div class="kpi-label">Stock alerts <i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <div class="kpi-value" th:text="${stats.lowStockCount} + ' / ' + ${stats.outOfStockCount}">0 / 0</div>
+                    <div class="kpi-meta">
+                        <span class="delta-down" th:text="${stats.lowStockCount} + ' low'">0 low</span>
+                        <span class="delta-down" th:text="${stats.outOfStockCount} + ' out of stock'">0 out of stock</span>
+                    </div>
+                </a>
+
+            </div>
+
+            <!-- Sales chart + inventory health -->
+            <div class="grid mb-4" style="grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);">
+
+                <section class="card">
+                    <div class="card-head">
+                        <h2>Sales <span class="card-sub" th:text="'· last ' + stats.periodDays + ' days'">· last 30 days</span></h2>
+                        <span class="small muted" th:text="'Peak ৳' + ${#numbers.formatDecimal(stats.chartMax(), 1, 'COMMA', 2, 'POINT')}">Peak ৳0</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-legend">
+                            <span><i class="legend-dot"></i> Daily revenue</span>
+                        </div>
+                        <div class="chart" role="img" aria-label="Daily revenue bar chart">
+                            <div class="bar" th:each="p : ${stats.chart}"
+                                 th:classappend="${stats.barHeight(p) == 0} ? 'zero'"
+                                 th:style="'height:' + ${stats.barHeight(p)} + '%'"
+                                 th:title="${p.tip()}"></div>
+                        </div>
+                        <div class="chart-x">
+                            <span th:if="${!#lists.isEmpty(stats.chart)}"
+                                  th:text="${stats.chart[0].day}">day</span>
+                            <span th:if="${!#lists.isEmpty(stats.chart)}"
+                                  th:text="${stats.chart[stats.chart.size() - 1].day}">day</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <div class="card-head"><h2>Inventory health</h2></div>
+                    <div class="card-body tight">
+                        <div class="stat-row">
+                            <span class="stat-label"><i class="dot in"></i> In stock variants</span>
+                            <span class="stat-value" th:text="${stats.inStockVariants}">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label"><i class="dot low"></i> Low stock</span>
+                            <span class="stat-value" th:text="${stats.lowStockCount}">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label"><i class="dot out"></i> Out of stock</span>
+                            <span class="stat-value" th:text="${stats.outOfStockCount}">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label"><i class="dot reserved"></i> Reserved units</span>
+                            <span class="stat-value" th:text="${stats.reservedUnits}">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label"><i class="dot incoming"></i> Incoming (on order)</span>
+                            <span class="stat-value" th:text="${stats.incomingUnits}">0</span>
+                        </div>
+                        <div class="mt-3">
+                            <a class="btn btn-outline btn-sm btn-block" th:href="@{/admin/inventory}">
+                                Open stock overview <i class="fa-solid fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+
+            <!-- Needs your attention -->
+            <section class="card mb-4">
+                <div class="card-head">
+                    <h2>Needs your attention</h2>
+                    <span class="card-sub" th:if="${stats.pendingOrders + stats.openPurchaseOrders + stats.overdueShipments + stats.pendingReviews == 0}">
+                        All clear
+                    </span>
+                </div>
+                <div class="card-body flush">
+
+                    <a class="attention-item" th:if="${stats.pendingOrders > 0}" th:href="@{/admin/orders(status='pending')}">
+                        <span class="att-icon warning"><i class="fa-solid fa-receipt"></i></span>
+                        <span class="att-text">
+                            <strong th:text="${stats.pendingOrders} + ' orders awaiting confirmation'">0 orders awaiting confirmation</strong>
+                            <span>Confirm orders to start processing and reserve stock.</span>
+                        </span>
+                        <i class="fa-solid fa-chevron-right att-go"></i>
+                    </a>
+
+                    <a class="attention-item" th:if="${stats.lowStockCount > 0}" th:href="@{/admin/reorder}">
+                        <span class="att-icon danger"><i class="fa-solid fa-arrow-trend-down"></i></span>
+                        <span class="att-text">
+                            <strong th:text="${stats.lowStockCount} + ' variants at or below their reorder point'">0 variants low</strong>
+                            <span>Plan replenishment before these run out.</span>
+                        </span>
+                        <i class="fa-solid fa-chevron-right att-go"></i>
+                    </a>
+
+                    <a class="attention-item" th:if="${stats.openPurchaseOrders > 0}" th:href="@{/admin/purchase-orders(status='ordered')}">
+                        <span class="att-icon info"><i class="fa-solid fa-file-invoice"></i></span>
+                        <span class="att-text">
+                            <strong th:text="${stats.openPurchaseOrders} + ' open purchase orders'">0 open purchase orders</strong>
+                            <span>Ordered goods do not count as sellable stock until received.</span>
+                        </span>
+                        <i class="fa-solid fa-chevron-right att-go"></i>
+                    </a>
+
+                    <a class="attention-item" th:if="${stats.overdueShipments > 0}" th:href="@{/admin/shipments(overdueOnly=true)}">
+                        <span class="att-icon danger"><i class="fa-solid fa-ship"></i></span>
+                        <span class="att-text">
+                            <strong th:text="${stats.overdueShipments} + ' shipments overdue'">0 shipments overdue</strong>
+                            <span>Expected arrival date has passed.</span>
+                        </span>
+                        <i class="fa-solid fa-chevron-right att-go"></i>
+                    </a>
+
+                    <a class="attention-item" th:if="${stats.pendingReviews > 0}" th:href="@{/admin/reviews(status='pending')}">
+                        <span class="att-icon accent"><i class="fa-solid fa-star"></i></span>
+                        <span class="att-text">
+                            <strong th:text="${stats.pendingReviews} + ' reviews awaiting moderation'">0 reviews pending</strong>
+                            <span>Approve or reject customer reviews.</span>
+                        </span>
+                        <i class="fa-solid fa-chevron-right att-go"></i>
+                    </a>
+
+                    <div class="empty" th:if="${stats.pendingOrders + stats.openPurchaseOrders + stats.overdueShipments + stats.pendingReviews == 0}">
+                        <i class="fa-regular fa-circle-check"></i>
+                        <strong>Nothing needs your attention</strong>
+                        <p>Orders, stock, shipments and reviews are all in a healthy state.</p>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- Recent orders + recent activity -->
+            <div class="grid grid-2">
+
+                <section class="card">
+                    <div class="card-head">
+                        <h2>Recent orders</h2>
+                        <a class="small" th:href="@{/admin/orders}">View all <i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                    <div class="card-body flush">
+                        <div class="table-wrap" th:if="${!#lists.isEmpty(recentOrders)}">
+                            <table class="data">
+                                <thead>
+                                <tr>
+                                    <th>Order</th>
+                                    <th>Customer</th>
+                                    <th class="num">Total</th>
+                                    <th>Status</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="o : ${recentOrders}">
+                                    <td data-label="Order">
+                                        <a th:href="@{/admin/orders/{id}(id=${o.id})}" class="mono strong"
+                                           th:text="'#' + ${o.id}">#1</a>
+                                        <div class="small muted" th:text="${#temporals.format(o.orderDate, 'dd MMM yyyy')}">date</div>
+                                    </td>
+                                    <td data-label="Customer" th:text="${o.customer.name}">Customer</td>
+                                    <td data-label="Total" class="num strong"
+                                        th:text="'৳' + ${#numbers.formatDecimal(o.grandTotal, 1, 'COMMA', 2, 'POINT')}">৳0</td>
+                                    <td data-label="Status">
+                                        <span class="badge"
+                                              th:classappend="${o.status.name() == 'delivered' ? 'badge-success' : ((o.status.name() == 'cancelled' or o.status.name() == 'returned') ? 'badge-danger' : (o.status.name() == 'pending' ? 'badge-warning' : 'badge-info'))}"
+                                              th:text="${o.status}">pending</span>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="empty" th:if="${#lists.isEmpty(recentOrders)}">
+                            <i class="fa-solid fa-receipt"></i>
+                            <strong>No orders yet</strong>
+                            <p>Orders placed on the storefront will appear here.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <div class="card-head">
+                        <h2>Recent activity</h2>
+                        <a class="small" th:href="@{/admin/movements}">Movement log <i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                    <div class="card-body flush">
+                        <div class="table-wrap" th:if="${!#lists.isEmpty(recentMovements)}">
+                            <table class="data">
+                                <thead>
+                                <tr>
+                                    <th>Movement</th>
+                                    <th>Variant</th>
+                                    <th class="num">Qty</th>
+                                    <th>When</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="m : ${recentMovements}">
+                                    <td data-label="Movement">
+                                        <span class="badge"
+                                              th:classappend="${m.quantity > 0} ? 'badge-success' : 'badge-danger'"
+                                              th:text="${m.movementType}">receipt</span>
+                                        <div class="small muted" th:if="${m.reason != null}" th:text="${m.reason}">reason</div>
+                                    </td>
+                                    <td data-label="Variant">
+                                        <span class="mono" th:text="${m.variant.sku}">SKU</span>
+                                        <div class="small muted" th:text="${m.warehouse.name}">Warehouse</div>
+                                    </td>
+                                    <td data-label="Qty" class="num strong"
+                                        th:text="${m.quantity > 0 ? '+' : ''} + ${m.quantity}">+0</td>
+                                    <td data-label="When" class="small muted nowrap"
+                                        th:text="${#temporals.format(m.createdAt, 'dd MMM HH:mm')}">when</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="empty" th:if="${#lists.isEmpty(recentMovements)}">
+                            <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                            <strong>No stock movements yet</strong>
+                            <p>Receipts, dispatches and adjustments are recorded here.</p>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+
+        <th:block th:replace="~{admin/fragments :: bottomNav('dashboard')}"></th:block>
+    </div>
+</div>
+<th:block th:replace="~{admin/fragments :: scripts}"></th:block>
+</body>
+</html>

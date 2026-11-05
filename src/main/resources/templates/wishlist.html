@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Wishlist')}"></head>
+<body>
+
+<div th:replace="~{layout :: header}"></div>
+
+<div class="container">
+    <div class="auth-wrap" style="margin-top:96px; margin-bottom:112px;">
+        <p class="eyebrow" style="text-align:center;">Saved pieces</p>
+        <h1 class="auth-title">Wishlist</h1>
+        <p class="auth-sub">Your wishlist is on its way. In the meantime, browse the collection
+            and keep an eye out for the heart.</p>
+        <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
+            <a class="btn btn-primary" th:href="@{/shop}">Shop the collection</a>
+            <a class="btn" th:href="@{/}">Back home</a>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{layout :: footer}"></div>
+<div th:replace="~{layout :: scripts}"></div>
+</body>
+</html>

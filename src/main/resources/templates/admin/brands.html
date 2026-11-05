@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/fragments :: head('Brands')}"></head>
+<body class="admin-body">
+<div class="admin-shell">
+
+    <th:block th:replace="~{admin/fragments :: sidebar('brands')}"></th:block>
+
+    <div class="admin-main">
+        <th:block th:replace="~{admin/fragments :: topbar}"></th:block>
+
+        <main class="admin-content">
+            <th:block th:replace="~{admin/fragments :: flash}"></th:block>
+
+            <nav class="crumbs" aria-label="Breadcrumb">
+                <a th:href="@{/admin}">Dashboard</a><span class="sep">/</span>
+                <a th:href="@{/admin/products}">Catalog</a><span class="sep">/</span>
+                <span class="current">Brands</span>
+            </nav>
+
+            <div class="page-head">
+                <div>
+                    <h1 class="page-title">Brands</h1>
+                    <p class="page-desc">Labels carried by the products you stock.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-2" style="align-items:start;">
+
+                <section class="card" th:if="${!#lists.isEmpty(brands)}">
+                    <div class="table-wrap">
+                        <table class="data">
+                            <thead>
+                            <tr>
+                                <th>Brand</th>
+                                <th>Logo</th>
+                                <th class="num">Products</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="b : ${brands}">
+                                <td data-label="Brand">
+                                    <strong th:text="${b.name}">Brand</strong>
+                                </td>
+                                <td data-label="Logo" class="small muted">
+                                    <span th:if="${b.logoUrl != null}" th:text="${b.logoUrl}">logo</span>
+                                    <span th:unless="${b.logoUrl != null}">—</span>
+                                </td>
+                                <td data-label="Products" class="num"
+                                    th:text="${productCounts[b.id] != null ? productCounts[b.id] : 0}">0</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="card" th:if="${#lists.isEmpty(brands)}">
+                    <div class="empty">
+                        <i class="fa-solid fa-tag"></i>
+                        <strong>No brands yet</strong>
+                        <p>Add a brand before assigning it to products.</p>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <div class="card-head"><h2>Add brand</h2></div>
+                    <div class="card-body">
+                        <form th:action="@{/admin/brands}" method="post">
+                            <div class="form-grid">
+                                <div class="field span-2">
+                                    <label for="brandName">Name <span class="req">*</span></label>
+                                    <input class="input" type="text" id="brandName" name="name" required
+                                           placeholder="Glintora Originals">
+                                </div>
+                                <div class="field span-2">
+                                    <label for="logoUrl">Logo URL</label>
+                                    <input class="input" type="text" id="logoUrl" name="logoUrl"
+                                           placeholder="/images/brands/logo.svg">
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="fa-solid fa-plus"></i> Add brand
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <th:block th:replace="~{admin/fragments :: bottomNav('products')}"></th:block>
+    </div>
+</div>
+<th:block th:replace="~{admin/fragments :: scripts}"></th:block>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/fragments :: head('Suppliers')}"></head>
+<body class="admin-body">
+<div class="admin-shell">
+
+    <th:block th:replace="~{admin/fragments :: sidebar('suppliers')}"></th:block>
+
+    <div class="admin-main">
+        <th:block th:replace="~{admin/fragments :: topbar}"></th:block>
+
+        <main class="admin-content">
+            <th:block th:replace="~{admin/fragments :: flash}"></th:block>
+
+            <nav class="crumbs" aria-label="Breadcrumb">
+                <a th:href="@{/admin}">Dashboard</a><span class="sep">/</span>
+                <a th:href="@{/admin/inventory}">Inventory</a><span class="sep">/</span>
+                <span class="current">Suppliers</span>
+            </nav>
+
+            <div class="page-head">
+                <div>
+                    <h1 class="page-title">Suppliers</h1>
+                    <p class="page-desc">Who you buy from, and how much you have bought.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-2" style="align-items:start;">
+
+                <section class="card" th:if="${!#lists.isEmpty(suppliers)}">
+                    <div class="table-wrap">
+                        <table class="data">
+                            <thead>
+                            <tr>
+                                <th>Supplier</th>
+                                <th>Country</th>
+                                <th class="num">Open POs</th>
+                                <th class="num">Total POs</th>
+                                <th class="num">Received spend</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="s : ${suppliers}">
+                                <td data-label="Supplier" class="cell-block">
+                                    <strong th:text="${s.name}">Supplier</strong>
+                                    <div class="small muted" th:text="${s.contactDetails != null ? s.contactDetails : 'No contact details'}">contact</div>
+                                </td>
+                                <td data-label="Country" th:text="${s.country != null ? s.country : '—'}">Country</td>
+                                <td data-label="Open POs" class="num">
+                                    <span class="badge badge-info"
+                                          th:if="${openOrders[s.id] != null and openOrders[s.id] > 0}"
+                                          th:text="${openOrders[s.id]}">0</span>
+                                    <span class="muted" th:if="${openOrders[s.id] == null or openOrders[s.id] == 0}">0</span>
+                                </td>
+                                <td data-label="Total POs" class="num" th:text="${totalOrders[s.id] != null ? totalOrders[s.id] : 0}">0</td>
+                                <td data-label="Received spend" class="num strong"
+                                    th:if="${spend[s.id] != null}"
+                                    th:text="'৳' + ${#numbers.formatDecimal(spend[s.id], 1, 'COMMA', 2, 'POINT')}">—</td>
+                                <td data-label="Received spend" class="num muted" th:unless="${spend[s.id] != null}">—</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="card" th:if="${#lists.isEmpty(suppliers)}">
+                    <div class="empty">
+                        <i class="fa-solid fa-truck-field"></i>
+                        <strong>No suppliers yet</strong>
+                        <p>Add your first supplier to start creating purchase orders.</p>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <div class="card-head"><h2>Add supplier</h2></div>
+                    <div class="card-body">
+                        <form th:action="@{/admin/suppliers}" method="post">
+                            <div class="form-grid">
+                                <div class="field span-2">
+                                    <label for="supName">Name <span class="req">*</span></label>
+                                    <input class="input" type="text" id="supName" name="name" required
+                                           placeholder="Dhaka Textiles Ltd.">
+                                </div>
+                                <div class="field">
+                                    <label for="supCountry">Country</label>
+                                    <input class="input" type="text" id="supCountry" name="country"
+                                           placeholder="Bangladesh">
+                                </div>
+                                <div class="field span-2">
+                                    <label for="supContact">Contact details</label>
+                                    <textarea class="textarea" id="supContact" name="contactDetails"
+                                              placeholder="Phone, email, address…"></textarea>
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="fa-solid fa-plus"></i> Add supplier
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <th:block th:replace="~{admin/fragments :: bottomNav('inventory')}"></th:block>
+    </div>
+</div>
+<th:block th:replace="~{admin/fragments :: scripts}"></th:block>
+</body>
+</html>

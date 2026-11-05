@@ -1,0 +1,38 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: glintora-backend
+  thymeleaf:
+    cache: false # set true in production
+  datasource:
+    url: jdbc:postgresql://localhost:5432/glintora
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: false
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+glintora:
+  jwt:
+    secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+    expiration-ms: 86400000 # 24 hours
+  excel:
+    # Excel (database.xlsx) importer is planned for Phase 2; seed data is
+    # applied through Flyway migration V2__seed_data.sql for now.
+    import-on-startup: false
+    file-path: database.xlsx
+
+logging:
+  level:
+    com.glintora.backend: INFO

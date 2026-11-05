@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/fragments :: head('Order')}"></head>
+<body class="admin-body">
+<div class="admin-shell">
+
+    <th:block th:replace="~{admin/fragments :: sidebar('orders')}"></th:block>
+
+    <div class="admin-main">
+        <th:block th:replace="~{admin/fragments :: topbar}"></th:block>
+
+        <main class="admin-content">
+            <th:block th:replace="~{admin/fragments :: flash}"></th:block>
+
+            <nav class="crumbs" aria-label="Breadcrumb">
+                <a th:href="@{/admin}">Dashboard</a><span class="sep">/</span>
+                <a th:href="@{/admin/orders}">Orders</a><span class="sep">/</span>
+                <span class="current" th:text="'#' + ${order.id}">#1</span>
+            </nav>
+
+            <div class="page-head">
+                <div>
+                    <h1 class="page-title" th:text="'Order #' + ${order.id}">Order #1</h1>
+                    <p class="page-desc flex wrap" style="gap:8px;">
+                        <span th:text="${#temporals.format(order.orderDate, 'dd MMM yyyy, HH:mm')}">date</span>
+                        <span class="badge"
+                              th:classappend="${order.status.name() == 'delivered' ? 'badge-success' : ((order.status.name() == 'cancelled' or order.status.name() == 'returned') ? 'badge-danger' : (order.status.name() == 'pending' ? 'badge-warning' : 'badge-info'))}"
+                              th:text="${order.status}">pending</span>
+                        <span class="badge badge-accent" th:text="${order.paymentStatusSummary()}">paid</span>
+                        <span th:text="${order.salesChannel.name}">Website</span>
+                    </p>
+                </div>
+
+                <!-- State-aware actions (guide §9) -->
+                <div class="page-actions">
+                    <form th:if="${order.status.name() == 'pending'}"
+                          th:action="@{/admin/orders/{id}/confirm(id=${order.id})}" method="post" class="inline">
+                        <button class="btn btn-primary" type="submit"><i class="fa-solid fa-check"></i> Confirm</button>
+                    </form>
+
+                    <form th:if="${order.status.name() == 'confirmed'}"
+                          th:action="@{/admin/orders/{id}/process(id=${order.id})}" method="post" class="inline">
+                        <button class="btn btn-primary" type="submit"><i class="fa-solid fa-gears"></i> Start processing</button>
+                    </form>
+
+                    <form th:if="${order.status.name() == 'processing' or order.status.name() == 'confirmed'}"
+                          th:action="@{/admin/orders/{id}/dispatch(id=${order.id})}" method="post"
+                          class="inline flex" style="gap:8px;">
+                        <input class="input" type="text" name="courier" placeholder="Courier"
+                               style="width:140px; min-height:40px;">
+                        <button class="btn btn-accent" type="submit">
+                            <i class="fa-solid fa-truck"></i> Dispatch (deduct stock)
+                        </button>
+                    </form>
+
+                    <form th:if="${order.status.name() == 'shipped'}"
+                          th:action="@{/admin/orders/{id}/deliver(id=${order.id})}" method="post" class="inline">
+                        <button class="btn btn-success" type="submit"><i class="fa-solid fa-check-double"></i> Mark delivered</button>
+                    </form>
+
+                    <form th:if="${order.status.name() != 'cancelled' and order.status.name() != 'shipped' and order.status.name() != 'delivered' and order.status.name() != 'returned'}"
+                          th:action="@{/admin/orders/{id}/cancel(id=${order.id})}" method="post" class="inline"
+                          data-confirm="Cancel this order and release its reserved stock?">
+                        <button class="btn btn-danger" type="submit">Cancel order</button>
+                    </form>
+
+                    <a class="btn btn-ghost" th:href="@{/admin/orders}">Back</a>
+                </div>
+            </div>
+
+            <div class="grid" style="grid-template-columns: minmax(0, 3fr) minmax(280px, 2fr); align-items: start;">
+
+                <div class="stack-4">
+
+                    <!-- Items -->
+                    <section class="card">
+                        <div class="card-head">
+                            <h2>Items</h2>
+                            <span class="card-sub" th:text="${#lists.size(order.items)} + ' lines'">0 lines</span>
+                        </div>
+                        <div class="table-wrap">
+                            <table class="data">
+                                <thead>
+                                <tr>
+                                    <th>Variant</th>
+                                    <th class="num">Qty</th>
+                                    <th class="num">Unit price</th>
+                                    <th class="num">Unit cost</th>
+                                    <th class="num">Line total</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="item : ${order.items}">
+                                    <td data-label="Variant" class="cell-block">
+                                        <span class="cell-text">
+                                            <strong th:text="${item.variant.product.name}">Product</strong>
+                                            <span><span class="mono" th:text="${item.variant.sku}">SKU</span>
+                                                <span th:if="${item.variant.size != null}"
+                                                      th:text="' · ' + ${item.variant.size.sizeName}"></span></span>
+                                        </span>
+                                    </td>
+                                    <td data-label="Qty" class="num" th:text="${item.quantity}">1</td>
+                                    <td data-label="Unit price" class="num" th:text="'৳' + ${item.unitPrice}">৳0</td>
+                                    <td data-label="Unit cost" class="num muted" th:text="'৳' + ${item.unitCost}">৳0</td>
+                                    <td data-label="Line total" class="num strong"
+                                        th:text="'৳' + ${#numbers.formatDecimal(item.unitPrice.multiply(item.quantity), 1, 'COMMA', 2, 'POINT')}">৳0</td>
+                                </tr>
+                                </tbody>
+                                <tfoot>
+                                <tr>
+                                    <td colspan="4" class="right muted small">Subtotal</td>
+                                    <td class="num" th:text="'৳' + ${order.subtotal}">৳0</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="4" class="right muted small">Shipping</td>
+                                    <td class="num" th:text="'৳' + ${order.shippingFee}">৳0</td>
+                                </tr>
+                                <tr th:if="${order.discountTotal.signum() > 0}">
+                                    <td colspan="4" class="right muted small">Discount</td>
+                                    <td class="num delta-down" th:text="'−৳' + ${order.discountTotal}">৳0</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="4" class="right strong">Grand total</td>
+                                    <td class="num strong"
+                                        th:text="'৳' + ${#numbers.formatDecimal(order.grandTotal, 1, 'COMMA', 2, 'POINT')}">৳0</td>
+                                </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </section>
+
+                    <!-- Timeline -->
+                    <section class="card">
+                        <div class="card-head"><h2>Timeline</h2></div>
+                        <div class="card-body">
+                            <ul class="timeline" th:if="${!#lists.isEmpty(statusHistory)}">
+                                <li th:each="h : ${statusHistory}">
+                                    <div class="tl-time" th:text="${#temporals.format(h.changedAt, 'dd MMM yyyy, HH:mm')}">when</div>
+                                    <div class="tl-title">
+                                        <span th:if="${h.oldStatus != null}" th:text="${h.oldStatus} + ' → '"></span>
+                                        <strong th:text="${h.newStatus}">pending</strong>
+                                    </div>
+                                </li>
+                            </ul>
+                            <p class="small muted" th:if="${#lists.isEmpty(statusHistory)}">No status changes recorded yet.</p>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="stack-4">
+
+                    <!-- Customer & address -->
+                    <section class="card">
+                        <div class="card-head"><h2>Customer &amp; delivery</h2></div>
+                        <div class="card-body">
+                            <dl class="dl">
+                                <dt>Name</dt><dd th:text="${order.customer.name}">Customer</dd>
+                                <dt>Email</dt><dd th:text="${order.customer.email}">email</dd>
+                                <dt>Phone</dt><dd th:text="${order.customer.phone != null ? order.customer.phone : '—'}">—</dd>
+                            </dl>
+                        </div>
+                        <div class="card-body" style="border-top:1px solid var(--color-border);"
+                             th:if="${order.shippingAddress != null}">
+                            <div class="section-title">Ship to</div>
+                            <p class="small" style="margin:0; line-height:1.6;">
+                                <span th:text="${order.shippingAddress.address}">address</span><br>
+                                <span th:text="${order.shippingAddress.city}">city</span>
+                                <span th:text="${order.shippingAddress.postalCode != null ? order.shippingAddress.postalCode : ''}"></span>
+                            </p>
+                        </div>
+                    </section>
+
+                    <!-- Payments -->
+                    <section class="card">
+                        <div class="card-head">
+                            <h2>Payments</h2>
+                            <span class="card-sub" th:text="${order.paymentStatusSummary()}">paid</span>
+                        </div>
+                        <div class="card-body flush">
+                            <div class="table-wrap" th:if="${!#lists.isEmpty(order.payments)}">
+                                <table class="data">
+                                    <thead>
+                                    <tr><th>Method</th><th>Status</th><th class="num">Amount</th></tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr th:each="p : ${order.payments}">
+                                        <td data-label="Method" th:text="${p.paymentMethod}">COD</td>
+                                        <td data-label="Status">
+                                            <span class="badge"
+                                                  th:classappend="${p.status.name() == 'paid' ? 'badge-success' : (p.status.name() == 'failed' ? 'badge-danger' : (p.status.name() == 'refunded' ? 'badge-muted' : 'badge-warning'))}"
+                                                  th:text="${p.status}">pending</span>
+                                        </td>
+                                        <td data-label="Amount" class="num strong" th:text="'৳' + ${p.amount}">৳0</td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="empty" th:if="${#lists.isEmpty(order.payments)}">
+                                <i class="fa-solid fa-credit-card"></i>
+                                <strong>No payment records</strong>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Delivery -->
+                    <section class="card" th:if="${!#lists.isEmpty(order.deliveryShipments)}">
+                        <div class="card-head"><h2>Delivery</h2></div>
+                        <div class="card-body">
+                            <div th:each="d : ${order.deliveryShipments}" class="stack-3">
+                                <div class="flex-between">
+                                    <strong th:text="${d.courier != null ? d.courier : 'Manual'}">Courier</strong>
+                                    <span class="badge badge-info" th:text="${d.status.replace('_', ' ')}">in transit</span>
+                                </div>
+                                <div class="small muted" th:if="${d.trackingNumber != null}">
+                                    Tracking: <span class="mono" th:text="${d.trackingNumber}">TRK</span>
+                                </div>
+                                <div class="small muted" th:if="${d.shippedAt != null}">
+                                    Shipped <span th:text="${#temporals.format(d.shippedAt, 'dd MMM, HH:mm')}">date</span>
+                                </div>
+                                <div class="small muted" th:if="${d.deliveredAt != null}">
+                                    Delivered <span th:text="${#temporals.format(d.deliveredAt, 'dd MMM, HH:mm')}">date</span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+
+        <th:block th:replace="~{admin/fragments :: bottomNav('orders')}"></th:block>
+    </div>
+</div>
+<th:block th:replace="~{admin/fragments :: scripts}"></th:block>
+</body>
+</html>

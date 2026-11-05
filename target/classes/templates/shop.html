@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Shop')}"></head>
+<body>
+
+<div th:replace="~{layout :: header}"></div>
+
+<div class="container">
+    <div class="collection-head">
+        <div>
+            <p class="eyebrow" th:if="${selectedCategory != null or selectedBrand != null or q != null}">Filtered</p>
+            <h1 class="page-title"
+                th:text="${q != null and !q.isEmpty() ? 'Results for &quot;' + q + '&quot;' : 'The Collection'}">The Collection</h1>
+            <p class="text-faint" style="font-size:13px; margin:0;"
+               th:text="${#lists.size(products)} + ' pieces'">0 pieces</p>
+        </div>
+        <div class="collection-tools">
+            <button class="btn btn-sm filter-btn" data-filter-toggle>
+                <i class="fa-solid fa-sliders" style="font-size:11px;"></i> Filter
+            </button>
+            <form th:action="@{/shop}" method="get" style="display:flex; gap:8px; align-items:center;">
+                <input type="hidden" name="q" th:value="${q}">
+                <input type="hidden" name="category" th:value="${selectedCategory}">
+                <input type="hidden" name="brand" th:value="${selectedBrand}">
+                <input type="hidden" name="size" th:value="${selectedSize}">
+                <label class="pdp-label" for="sortSelect">Sort</label>
+                <select id="sortSelect" name="sort" class="select" onchange="this.form.submit()">
+                    <option value="newest" th:selected="${sort == 'newest'}">Newest</option>
+                    <option value="price_asc" th:selected="${sort == 'price_asc'}">Price: low to high</option>
+                    <option value="price_desc" th:selected="${sort == 'price_desc'}">Price: high to low</option>
+                </select>
+            </form>
+        </div>
+    </div>
+
+    <div class="collection-layout">
+        <!-- filters -->
+        <aside class="filter-panel" aria-label="Filters">
+            <div class="filter-panel-head d-none">
+                <span class="pdp-label">Filters</span>
+                <button class="icon-btn" data-drawer-close aria-label="Close filters">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form th:action="@{/shop}" method="get">
+                <input type="hidden" name="sort" th:value="${sort}">
+                <input type="hidden" name="q" th:value="${q}">
+
+                <div class="filter-group">
+                    <h4>Category</h4>
+                    <ul class="filter-list">
+                        <li>
+                            <a th:href="@{/shop}" th:classappend="${selectedCategory == null} ? 'active'">
+                                <span>All</span>
+                            </a>
+                        </li>
+                        <li th:each="c : ${categories}">
+                            <a th:href="@{/shop(category=${c.id}, brand=${selectedBrand}, size=${selectedSize}, q=${q}, sort=${sort})}"
+                               th:classappend="${selectedCategory == c.id} ? 'active'">
+                                <span th:text="${c.name}">Category</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="filter-group">
+                    <h4>Brand</h4>
+                    <ul class="filter-list">
+                        <li>
+                            <a th:href="@{/shop(category=${selectedCategory}, size=${selectedSize}, q=${q}, sort=${sort})}"
+                               th:classappend="${selectedBrand == null} ? 'active'"><span>All brands</span></a>
+                        </li>
+                        <li th:each="b : ${brands}">
+                            <a th:href="@{/shop(brand=${b.id}, category=${selectedCategory}, size=${selectedSize}, q=${q}, sort=${sort})}"
+                               th:classappend="${selectedBrand == b.id} ? 'active'">
+                                <span th:text="${b.name}">Brand</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="filter-group">
+                    <h4>Size</h4>
+                    <div class="chip-row">
+                        <a class="chip" style="text-decoration:none; display:inline-block;"
+                           th:each="s : ${sizes}"
+                           th:href="@{/shop(size=${s.id}, category=${selectedCategory}, brand=${selectedBrand}, q=${q}, sort=${sort})}"
+                           th:classappend="${selectedSize == s.id} ? 'active'"
+                           th:text="${s.sizeName}"
+                           th:attr="aria-pressed=${selectedSize == s.id} ? 'true' : 'false'">M</a>
+                    </div>
+                </div>
+
+                <div class="filter-clear">
+                    <a class="link-underline" th:href="@{/shop}">Clear all filters</a>
+                </div>
+            </form>
+        </aside>
+
+        <!-- grid -->
+        <div>
+            <div th:if="${products.isEmpty()}" class="panel" style="text-align:center; padding:64px 24px;">
+                <p class="text-soft" style="margin-bottom:16px;">No pieces match your filters.</p>
+                <a class="btn btn-sm" th:href="@{/shop}">Clear filters</a>
+            </div>
+
+            <div class="product-grid" th:unless="${products.isEmpty()}">
+                <article class="product-card" th:each="p : ${products}">
+                    <a class="product-media" th:href="@{/shop/product/{code}(code=${p.productCode})}">
+                        <span class="product-flag" th:unless="${p.inStock}">Sold out</span>
+                        <img th:src="${p.imageUrl}" th:alt="${p.name}" loading="lazy">
+                    </a>
+                    <div class="product-info">
+                        <div class="product-brand" th:text="${p.brandName} ?: 'Glintora'">Brand</div>
+                        <h3 class="product-name">
+                            <a th:href="@{/shop/product/{code}(code=${p.productCode})}" th:text="${p.name}">Product</a>
+                        </h3>
+                        <div class="product-price" th:text="'৳' + ${p.price}">৳0</div>
+                        <div class="product-meta" th:if="${p.inStock}" th:text="${p.availableUnits} + ' available'">5 available</div>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{layout :: footer}"></div>
+<div th:replace="~{layout :: scripts}"></div>
+</body>
+</html>

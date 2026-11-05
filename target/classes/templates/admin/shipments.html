@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/fragments :: head('Incoming Shipments')}"></head>
+<body class="admin-body">
+<div class="admin-shell">
+
+    <th:block th:replace="~{admin/fragments :: sidebar('shipments')}"></th:block>
+
+    <div class="admin-main">
+        <th:block th:replace="~{admin/fragments :: topbar}"></th:block>
+
+        <main class="admin-content">
+            <th:block th:replace="~{admin/fragments :: flash}"></th:block>
+
+            <nav class="crumbs" aria-label="Breadcrumb">
+                <a th:href="@{/admin}">Dashboard</a><span class="sep">/</span>
+                <a th:href="@{/admin/inventory}">Inventory</a><span class="sep">/</span>
+                <span class="current">Incoming shipments</span>
+            </nav>
+
+            <div class="page-head">
+                <div>
+                    <h1 class="page-title">Incoming shipments</h1>
+                    <p class="page-desc">
+                        Timeline: Ordered → Dispatched → In Transit → Arrived → Receiving → Completed.
+                        One purchase order may arrive in multiple shipments.
+                    </p>
+                </div>
+                <div class="page-actions">
+                    <a class="btn btn-outline" th:href="@{/admin/receiving}">
+                        <i class="fa-solid fa-box-open"></i> Goods receiving
+                    </a>
+                </div>
+            </div>
+
+            <!-- Status tabs + overdue filter -->
+            <div class="tabs">
+                <a class="tab" th:classappend="${statusFilter == 'all'} ? 'active'"
+                   th:href="@{/admin/shipments(overdueOnly=${overdueOnly})}">
+                    All <span class="tab-count" th:text="${statusCounts['all']}">0</span>
+                </a>
+                <a class="tab" th:each="entry : ${statusCounts}" th:if="${entry.key != 'all'}"
+                   th:classappend="${statusFilter == entry.key} ? 'active'"
+                   th:href="@{/admin/shipments(status=${entry.key}, overdueOnly=${overdueOnly})}">
+                    <span th:text="${entry.key.replace('_', ' ')}">status</span>
+                    <span class="tab-count" th:text="${entry.value}">0</span>
+                </a>
+                <a class="tab" th:classappend="${overdueOnly} ? 'active'"
+                   th:href="@{/admin/shipments(status=${statusFilter}, overdueOnly=${!overdueOnly})}">
+                    <i class="fa-solid fa-clock"></i> Overdue only
+                </a>
+            </div>
+
+            <section class="card" th:if="${!#lists.isEmpty(shipments)}">
+                <div class="table-wrap">
+                    <table class="data">
+                        <thead>
+                        <tr>
+                            <th>Shipment</th>
+                            <th>Purchase order</th>
+                            <th>Dispatch</th>
+                            <th>Expected arrival</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="s : ${shipments}">
+                            <td data-label="Shipment" class="cell-block">
+                                <strong th:text="${s.shipmentReference != null} ? ${s.shipmentReference} : 'Shipment #' + ${s.id}">Shipment</strong>
+                                <div class="small muted" th:if="${overdueIds.contains(s.id)}">
+                                    <span class="delta-down">Overdue — expected date has passed</span>
+                                </div>
+                            </td>
+                            <td data-label="Purchase order">
+                                <a class="mono" th:href="@{/admin/purchase-orders/{id}(id=${s.purchaseOrder.id})}"
+                                   th:text="'PO-' + ${s.purchaseOrder.id}">PO-1</a>
+                                <div class="small muted" th:text="${s.purchaseOrder.supplier.name}">Supplier</div>
+                            </td>
+                            <td data-label="Dispatch" class="nowrap"
+                                th:text="${s.dispatchDate != null ? #temporals.format(s.dispatchDate, 'dd MMM yyyy') : '—'}">—</td>
+                            <td data-label="Expected arrival" class="nowrap"
+                                th:text="${s.expectedArrivalDate != null ? #temporals.format(s.expectedArrivalDate, 'dd MMM yyyy') : '—'}">—</td>
+                            <td data-label="Status">
+                                <span class="badge"
+                                      th:classappend="${s.status == 'completed' ? 'badge-success' : (s.status == 'cancelled' ? 'badge-danger' : ((s.status == 'arrived' or s.status == 'receiving') ? 'badge-warning' : 'badge-info'))}"
+                                      th:text="${s.status.replace('_', ' ')}">ordered</span>
+                            </td>
+                            <td data-label="" class="right">
+                                <div class="row-actions">
+                                    <form th:each="action : ${nextActions[s.id]}"
+                                          th:action="@{/admin/shipments/{id}/status(id=${s.id})}" method="post"
+                                          class="inline"
+                                          th:data-confirm="${action == 'cancelled'} ? 'Cancel this shipment?' : null">
+                                        <input type="hidden" name="status" th:value="${action}">
+                                        <button class="btn btn-sm"
+                                                th:classappend="${action == 'cancelled'} ? 'btn-ghost' : 'btn-outline'"
+                                                type="submit" th:text="${action.replace('_', ' ')}">advance</button>
+                                    </form>
+                                    <a class="btn btn-outline btn-sm"
+                                       th:if="${s.status == 'arrived' or s.status == 'receiving'}"
+                                       th:href="@{/admin/receiving(shipment=${s.id})}">
+                                        <i class="fa-solid fa-box-open"></i> Receive
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="card" th:if="${#lists.isEmpty(shipments)}">
+                <div class="empty">
+                    <i class="fa-solid fa-ship"></i>
+                    <strong>No shipments match</strong>
+                    <p>Book a shipment from a purchase order to track incoming goods.</p>
+                    <a class="btn btn-outline" th:if="${statusFilter != 'all' or overdueOnly}"
+                       th:href="@{/admin/shipments}">Clear filters</a>
+                    <a class="btn btn-primary" th:if="${statusFilter == 'all' and !overdueOnly and !#lists.isEmpty(openPurchaseOrders)}"
+                       th:href="@{/admin/purchase-orders}">Open a purchase order</a>
+                </div>
+            </section>
+
+            <!-- Book shipment from list -->
+            <section class="card mt-4" th:if="${!#lists.isEmpty(openPurchaseOrders)}">
+                <div class="card-head">
+                    <h2>Book a shipment</h2>
+                    <span class="card-sub">Against an open purchase order</span>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/admin/shipments}" method="post">
+                        <div class="form-grid">
+                            <div class="field">
+                                <label for="poSelect">Purchase order <span class="req">*</span></label>
+                                <select class="select" id="poSelect" name="purchaseOrderId" required>
+                                    <option th:each="po : ${openPurchaseOrders}" th:value="${po.id}"
+                                            th:text="'PO-' + ${po.id} + ' · ' + ${po.supplier.name}">PO</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label for="shipRef">Reference</label>
+                                <input class="input" type="text" id="shipRef" name="reference"
+                                       placeholder="SHP-2026-001">
+                            </div>
+                            <div class="field">
+                                <label for="shipEta">Expected arrival <span class="req">*</span></label>
+                                <input class="input" type="date" id="shipEta" name="expectedArrival" required>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fa-solid fa-ship"></i> Book shipment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+        </main>
+
+        <th:block th:replace="~{admin/fragments :: bottomNav('inventory')}"></th:block>
+    </div>
+</div>
+<th:block th:replace="~{admin/fragments :: scripts}"></th:block>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/fragments :: head('Stock Movements')}"></head>
+<body class="admin-body">
+<div class="admin-shell">
+
+    <th:block th:replace="~{admin/fragments :: sidebar('movements')}"></th:block>
+
+    <div class="admin-main">
+        <th:block th:replace="~{admin/fragments :: topbar}"></th:block>
+
+        <main class="admin-content">
+            <th:block th:replace="~{admin/fragments :: flash}"></th:block>
+
+            <nav class="crumbs" aria-label="Breadcrumb">
+                <a th:href="@{/admin}">Dashboard</a><span class="sep">/</span>
+                <a th:href="@{/admin/inventory}">Inventory</a><span class="sep">/</span>
+                <span class="current">Stock movements</span>
+            </nav>
+
+            <div class="page-head">
+                <div>
+                    <h1 class="page-title">Stock movements</h1>
+                    <p class="page-desc">
+                        Append-only audit log. Every stock change posts exactly one movement — nothing is ever edited or deleted.
+                    </p>
+                </div>
+                <div class="page-actions">
+                    <a class="btn btn-outline" th:href="@{/admin/inventory}">
+                        <i class="fa-solid fa-boxes-stacked"></i> Stock overview
+                    </a>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <form class="filter-bar" method="get" th:action="@{/admin/movements}">
+                <select class="select" name="type" aria-label="Movement type">
+                    <option value="all">All movement types</option>
+                    <option th:each="t : ${movementTypes}" th:value="${t}"
+                            th:selected="${typeFilter == t.name()}"
+                            th:text="${t.name().replace('_', ' ')}">type</option>
+                </select>
+                <select class="select" name="warehouse" aria-label="Warehouse">
+                    <option value="">All warehouses</option>
+                    <option th:each="w : ${warehouses}" th:value="${w.id}"
+                            th:selected="${warehouseFilter != null and warehouseFilter == w.id}"
+                            th:text="${w.name}">Warehouse</option>
+                </select>
+                <span class="filter-spacer"></span>
+                <span class="filter-count" th:text="${#lists.size(movements)} + ' movements'">0 movements</span>
+                <button class="btn btn-primary" type="submit"><i class="fa-solid fa-filter"></i> Apply</button>
+                <a class="btn btn-ghost" th:if="${typeFilter != 'all' or warehouseFilter != null}"
+                   th:href="@{/admin/movements}">Clear</a>
+            </form>
+
+            <section class="card" th:if="${!#lists.isEmpty(movements)}">
+                <div class="table-wrap">
+                    <table class="data">
+                        <thead>
+                        <tr>
+                            <th>When</th>
+                            <th>Type</th>
+                            <th>Variant</th>
+                            <th>Warehouse</th>
+                            <th class="num">Qty</th>
+                            <th>Actor</th>
+                            <th>Reason</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="m : ${movements}">
+                            <td data-label="When" class="small muted nowrap"
+                                th:text="${#temporals.format(m.createdAt, 'dd MMM yyyy HH:mm')}">when</td>
+                            <td data-label="Type">
+                                <span class="badge"
+                                      th:classappend="${m.quantity > 0} ? 'badge-success' : 'badge-danger'"
+                                      th:text="${m.movementType.name().replace('_', ' ')}">receipt</span>
+                            </td>
+                            <td data-label="Variant" class="cell-block">
+                                <span class="mono" th:text="${m.variant.sku}">SKU</span>
+                                <div class="small muted" th:text="${m.variant.product.name}">Product</div>
+                            </td>
+                            <td data-label="Warehouse" th:text="${m.warehouse.name}">Warehouse</td>
+                            <td data-label="Qty" class="num strong"
+                                th:text="${m.quantity > 0 ? '+' : ''} + ${m.quantity}">+0</td>
+                            <td data-label="Actor" th:text="${m.actor != null ? m.actor : 'system'}">system</td>
+                            <td data-label="Reason" class="small muted" th:text="${m.reason != null ? m.reason : '—'}">—</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="card" th:if="${#lists.isEmpty(movements)}">
+                <div class="empty">
+                    <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                    <strong>No movements match</strong>
+                    <p>Clear the filters or post a receipt/adjustment to create movement history.</p>
+                    <a class="btn btn-outline" th:href="@{/admin/movements}">Clear filters</a>
+                </div>
+            </section>
+        </main>
+
+        <th:block th:replace="~{admin/fragments :: bottomNav('inventory')}"></th:block>
+    </div>
+</div>
+<th:block th:replace="~{admin/fragments :: scripts}"></th:block>
+</body>
+</html>

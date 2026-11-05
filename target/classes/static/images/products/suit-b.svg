@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800" viewBox="0 0 600 800">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1b2a4a"/>
+      <stop offset="100%" stop-color="#2f4468"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="800" fill="url(#g)"/>
+  <g transform="translate(300 360)" fill="none" stroke="#e0c46a" stroke-width="6" opacity="0.9">
+    <path d="M-100 -80 L-45 -125 L45 -125 L100 -80 L65 -45 L48 -62 L48 130 L-48 130 L-48 -62 L-65 -45 Z"/>
+    <path d="M-60 40 L60 40 M-60 70 L60 70"/>
+  </g>
+  <text x="300" y="600" text-anchor="middle" font-family="Segoe UI, sans-serif"
+        font-size="24" fill="#e9ecef" letter-spacing="4">EMBROIDERED SUIT</text>
+  <text x="300" y="636" text-anchor="middle" font-family="Segoe UI, sans-serif"
+        font-size="16" fill="#adb5bd">GLI-001 · Navy</text>
+</svg>

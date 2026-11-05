@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/fragments :: head('Goods Receiving')}"></head>
+<body class="admin-body">
+<div class="admin-shell">
+
+    <th:block th:replace="~{admin/fragments :: sidebar('receiving')}"></th:block>
+
+    <div class="admin-main">
+        <th:block th:replace="~{admin/fragments :: topbar}"></th:block>
+
+        <main class="admin-content">
+            <th:block th:replace="~{admin/fragments :: flash}"></th:block>
+
+            <nav class="crumbs" aria-label="Breadcrumb">
+                <a th:href="@{/admin}">Dashboard</a><span class="sep">/</span>
+                <a th:href="@{/admin/inventory}">Inventory</a><span class="sep">/</span>
+                <span class="current">Goods receiving</span>
+            </nav>
+
+            <div class="page-head">
+                <div>
+                    <h1 class="page-title">Goods receiving</h1>
+                    <p class="page-desc">
+                        Receive partially or in full. Only accepted units (received − rejected) are added to stock.
+                    </p>
+                </div>
+                <div class="page-actions">
+                    <a class="btn btn-outline" th:href="@{/admin/shipments}">
+                        <i class="fa-solid fa-ship"></i> Shipments
+                    </a>
+                </div>
+            </div>
+
+            <!-- Shipment picker -->
+            <form class="filter-bar" method="get" th:action="@{/admin/receiving}">
+                <select class="select" name="shipment" aria-label="Shipment to receive">
+                    <option value="">Choose an incoming shipment…</option>
+                    <option th:each="s : ${openShipments}" th:if="${s.shipmentReference != null}"
+                            th:value="${s.id}"
+                            th:selected="${selectedShipment != null and selectedShipment == s.id}"
+                            th:text="${s.shipmentReference} + ' · PO-' + ${s.purchaseOrder.id} + ' · ' + ${s.status.replace('_', ' ')}">Shipment</option>
+                    <option th:each="s : ${openShipments}" th:unless="${s.shipmentReference != null}"
+                            th:value="${s.id}"
+                            th:selected="${selectedShipment != null and selectedShipment == s.id}"
+                            th:text="'Shipment #' + ${s.id} + ' · PO-' + ${s.purchaseOrder.id} + ' · ' + ${s.status.replace('_', ' ')}">Shipment</option>
+                </select>
+                <button class="btn btn-primary" type="submit"><i class="fa-solid fa-arrow-right"></i> Open</button>
+                <span class="filter-spacer"></span>
+                <span class="filter-count" th:text="${#lists.size(openShipments)} + ' open shipments'">0 open</span>
+            </form>
+
+            <!-- Receiving form -->
+            <section class="card mb-4" th:if="${selected != null}">
+                <div class="card-head">
+                    <h2 th:if="${selected.shipmentReference != null}" th:text="${selected.shipmentReference}">Shipment</h2>
+                    <h2 th:unless="${selected.shipmentReference != null}" th:text="'Shipment #' + ${selected.id}">Shipment</h2>
+                    <span class="card-sub">
+                        PO-<span th:text="${selected.purchaseOrder.id}">1</span>
+                        · <span th:text="${selected.purchaseOrder.supplier.name}">Supplier</span>
+                        · expected
+                        <span th:text="${selected.expectedArrivalDate != null ? #temporals.format(selected.expectedArrivalDate, 'dd MMM yyyy') : '—'}">date</span>
+                    </span>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/admin/receiving}" method="post" id="receiveForm">
+                        <input type="hidden" name="shipmentId" th:value="${selected.id}">
+
+                        <div class="form-grid mb-3">
+                            <div class="field">
+                                <label for="warehouseId">Receiving warehouse <span class="req">*</span></label>
+                                <select class="select" id="warehouseId" name="warehouseId" required>
+                                    <option th:each="w : ${warehouses}" th:value="${w.id}" th:text="${w.name}">Warehouse</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label for="receivedBy">Received by</label>
+                                <input class="input" type="text" id="receivedBy" name="receivedBy" placeholder="admin">
+                            </div>
+                        </div>
+
+                        <div class="table-wrap">
+                            <table class="data">
+                                <thead>
+                                <tr>
+                                    <th>Variant</th>
+                                    <th class="num">Ordered</th>
+                                    <th class="num">Previously received</th>
+                                    <th class="num">Remaining</th>
+                                    <th class="num">Receive now</th>
+                                    <th class="num">Reject</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="line : ${receivingLines}">
+                                    <td data-label="Variant" class="cell-block">
+                                        <span class="cell-text">
+                                            <strong th:text="${line.productName()}">Product</strong>
+                                            <span class="mono" th:text="${line.sku()}">SKU</span>
+                                        </span>
+                                    </td>
+                                    <td data-label="Ordered" class="num" th:text="${line.ordered()}">0</td>
+                                    <td data-label="Previously received" class="num muted" th:text="${line.received()}">0</td>
+                                    <td data-label="Remaining" class="num strong">
+                                        <span th:classappend="${line.remaining() > 0} ? 'delta-down' : 'delta-up'"
+                                              th:text="${line.remaining()}">0</span>
+                                    </td>
+                                    <td data-label="Receive now">
+                                        <input class="input" type="number" name="received" min="0"
+                                               th:max="${line.remaining()}" value="0"
+                                               th:disabled="${line.remaining() <= 0}"
+                                               style="text-align:right;">
+                                        <input type="hidden" name="variantId" th:value="${line.variantId()}">
+                                    </td>
+                                    <td data-label="Reject">
+                                        <input class="input" type="number" name="rejected" min="0" value="0"
+                                               th:disabled="${line.remaining() <= 0}"
+                                               style="text-align:right;">
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <p class="small muted mt-3">
+                            Leave a line at 0 to skip it — you can come back and receive the rest later.
+                            A partial receipt moves the purchase order to <strong>partial</strong>; a full
+                            receipt marks it <strong>received</strong>.
+                        </p>
+
+                        <div class="form-actions">
+                            <button class="btn btn-success btn-lg" type="submit">
+                                <i class="fa-solid fa-box-open"></i> Post goods receipt
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Receipt history -->
+            <section class="card">
+                <div class="card-head">
+                    <h2>Receipt history</h2>
+                    <span class="card-sub" th:text="${#lists.size(receipts)} + ' receipts'">0 receipts</span>
+                </div>
+                <div class="table-wrap" th:if="${!#lists.isEmpty(receipts)}">
+                    <table class="data">
+                        <thead>
+                        <tr>
+                            <th>Receipt</th>
+                            <th>Shipment</th>
+                            <th>Warehouse</th>
+                            <th>By</th>
+                            <th>When</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="r : ${receipts}">
+                            <td data-label="Receipt" class="mono strong" th:text="'#' + ${r.id}">#1</td>
+                            <td data-label="Shipment">
+                                <a th:if="${r.shipment != null}"
+                                   th:href="@{/admin/receiving(shipment=${r.shipment.id})}"
+                                   th:text="${r.shipment.shipmentReference != null} ? ${r.shipment.shipmentReference} : 'Shipment #' + ${r.shipment.id}">Shipment</a>
+                                <span th:if="${r.shipment == null}" class="muted">manual</span>
+                            </td>
+                            <td data-label="Warehouse" th:text="${r.warehouse.name}">Warehouse</td>
+                            <td data-label="By" th:text="${r.receivedBy != null ? r.receivedBy : '—'}">—</td>
+                            <td data-label="When" class="small muted nowrap"
+                                th:text="${#temporals.format(r.receivedAt, 'dd MMM yyyy HH:mm')}">when</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="empty" th:if="${#lists.isEmpty(receipts)}">
+                    <i class="fa-solid fa-box-open"></i>
+                    <strong>No goods received yet</strong>
+                    <p>Choose an incoming shipment above to post the first receipt.</p>
+                </div>
+            </section>
+        </main>
+
+        <th:block th:replace="~{admin/fragments :: bottomNav('inventory')}"></th:block>
+    </div>
+</div>
+<th:block th:replace="~{admin/fragments :: scripts}"></th:block>
+</body>
+</html>

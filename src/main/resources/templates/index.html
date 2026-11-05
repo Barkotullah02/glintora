@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Modern Ethnic Wear')}"></head>
+<body>
+
+<div th:replace="~{layout :: header}"></div>
+
+<!-- ============================================================ hero -->
+<section class="hero">
+    <div class="hero-copy">
+        <p class="eyebrow">Autumn Edit · 2026</p>
+        <h1 class="hero-title">Quiet luxury,<br>
+            <em>rooted in craft.</em></h1>
+        <p class="lede">Hand-finished embroidery, breathable natural fabrics and silhouettes cut for
+            real life — curated in limited runs from the studios we trust.</p>
+        <div class="hero-cta">
+            <a class="btn btn-primary" th:href="@{/shop(category=${womenId})}">Shop women</a>
+            <a class="btn" th:href="@{/shop(category=${menId})}">Shop men</a>
+        </div>
+    </div>
+    <div class="hero-media">
+        <img th:src="@{/images/hero.svg}" alt="Glintora autumn editorial">
+    </div>
+</section>
+
+<!-- ==================================================== new arrivals -->
+<section class="section container" th:if="${!newArrivals.isEmpty()}">
+    <div class="section-head">
+        <div>
+            <p class="eyebrow">Just landed</p>
+            <h2 class="section-title">New Arrivals</h2>
+        </div>
+        <a class="link-underline" th:href="@{/shop(sort='newest')}">View all</a>
+    </div>
+    <div class="product-grid">
+        <article class="product-card" th:each="p : ${newArrivals}">
+            <a class="product-media" th:href="@{/shop/product/{code}(code=${p.productCode})}">
+                <span class="product-flag" th:unless="${p.inStock}">Sold out</span>
+                <img th:src="${p.imageUrl}" th:alt="${p.name}" loading="lazy">
+            </a>
+            <div class="product-info">
+                <div class="product-brand" th:text="${p.brandName} ?: 'Glintora'">Brand</div>
+                <h3 class="product-name">
+                    <a th:href="@{/shop/product/{code}(code=${p.productCode})}" th:text="${p.name}">Product</a>
+                </h3>
+                <div class="product-price" th:text="'৳' + ${p.price}">৳0</div>
+            </div>
+        </article>
+    </div>
+</section>
+
+<!-- ================================================ category tiles -->
+<section class="section-tight container">
+    <div class="section-head">
+        <div>
+            <p class="eyebrow">Browse by</p>
+            <h2 class="section-title">The Edit</h2>
+        </div>
+    </div>
+    <div class="tile-grid">
+        <a class="tile" th:href="@{/shop(category=${womenId})}">
+            <div class="tile-media"><img th:src="@{/images/category-women.svg}" alt="Women" loading="lazy"></div>
+            <div class="tile-body">
+                <h3>Women</h3>
+                <span class="link-underline">Explore</span>
+            </div>
+        </a>
+        <a class="tile" th:href="@{/shop(category=${menId})}">
+            <div class="tile-media"><img th:src="@{/images/category-men.svg}" alt="Men" loading="lazy"></div>
+            <div class="tile-body">
+                <h3>Men</h3>
+                <span class="link-underline">Explore</span>
+            </div>
+        </a>
+        <a class="tile" th:href="@{/shop(sort='newest')}">
+            <div class="tile-media"><img th:src="@{/images/category-new.svg}" alt="New arrivals" loading="lazy"></div>
+            <div class="tile-body">
+                <h3>New Arrivals</h3>
+                <span class="link-underline">Explore</span>
+            </div>
+        </a>
+    </div>
+</section>
+
+<!-- ================================================= bestsellers -->
+<section class="section container" th:if="${!bestsellers.isEmpty()}">
+    <div class="section-head">
+        <div>
+            <p class="eyebrow">Loved by many</p>
+            <h2 class="section-title">Bestsellers</h2>
+        </div>
+        <a class="link-underline" th:href="@{/shop}">Shop all</a>
+    </div>
+    <div class="product-grid">
+        <article class="product-card" th:each="p : ${bestsellers}">
+            <a class="product-media" th:href="@{/shop/product/{code}(code=${p.productCode})}">
+                <span class="product-flag" th:unless="${p.inStock}">Sold out</span>
+                <img th:src="${p.imageUrl}" th:alt="${p.name}" loading="lazy">
+            </a>
+            <div class="product-info">
+                <div class="product-brand" th:text="${p.brandName} ?: 'Glintora'">Brand</div>
+                <h3 class="product-name">
+                    <a th:href="@{/shop/product/{code}(code=${p.productCode})}" th:text="${p.name}">Product</a>
+                </h3>
+                <div class="product-price" th:text="'৳' + ${p.price}">৳0</div>
+            </div>
+        </article>
+    </div>
+</section>
+
+<!-- ==================================================== brand strip -->
+<section class="section-tight">
+    <div class="container" style="text-align:center; margin-bottom:24px;">
+        <p class="eyebrow">House labels</p>
+        <h2 class="section-title">Featured Brands</h2>
+    </div>
+    <div class="brand-strip">
+        <a th:each="b : ${brands}" th:href="@{/shop(brand=${b.id})}" th:text="${b.name}">Brand</a>
+    </div>
+</section>
+
+<!-- ================================================ editorial note -->
+<section class="section container-sm" style="text-align:center;">
+    <p class="eyebrow">Our promise</p>
+    <p style="font-family:var(--serif); font-size:clamp(22px,2.4vw,30px); line-height:1.35; margin:0;">
+        Every piece is tracked from the supplier's shelf to yours — accurate sizes,
+        honest stock, and nothing oversold.
+    </p>
+</section>
+
+<div th:replace="~{layout :: footer}"></div>
+<div th:replace="~{layout :: scripts}"></div>
+</body>
+</html>

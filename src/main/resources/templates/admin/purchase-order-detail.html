@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/fragments :: head('Purchase Order')}"></head>
+<body class="admin-body">
+<div class="admin-shell">
+
+    <th:block th:replace="~{admin/fragments :: sidebar('purchase-orders')}"></th:block>
+
+    <div class="admin-main">
+        <th:block th:replace="~{admin/fragments :: topbar}"></th:block>
+
+        <main class="admin-content">
+            <th:block th:replace="~{admin/fragments :: flash}"></th:block>
+
+            <nav class="crumbs" aria-label="Breadcrumb">
+                <a th:href="@{/admin}">Dashboard</a><span class="sep">/</span>
+                <a th:href="@{/admin/inventory}">Inventory</a><span class="sep">/</span>
+                <a th:href="@{/admin/purchase-orders}">Purchase orders</a><span class="sep">/</span>
+                <span class="current" th:text="'PO-' + ${po.id}">PO-1</span>
+            </nav>
+
+            <div class="page-head">
+                <div>
+                    <h1 class="page-title" th:text="'Purchase order PO-' + ${po.id}">PO-1</h1>
+                    <p class="page-desc flex wrap" style="gap:8px;">
+                        <span th:text="${po.supplier.name}">Supplier</span>
+                        <span class="badge"
+                              th:classappend="${po.status == 'received' ? 'badge-success' : (po.status == 'cancelled' ? 'badge-danger' : (po.status == 'draft' ? 'badge-muted' : 'badge-info'))}"
+                              th:text="${po.status}">draft</span>
+                        <span class="muted" th:text="'· ' + ${po.currency}">· BDT</span>
+                    </p>
+                </div>
+                <div class="page-actions">
+                    <form th:each="s : ${nextStatuses}" th:action="@{/admin/purchase-orders/{id}/status(id=${po.id})}"
+                          method="post" class="inline"
+                          th:data-confirm="${s == 'cancelled'} ? 'Cancel this purchase order? This cannot be undone.' : null">
+                        <input type="hidden" name="status" th:value="${s}">
+                        <button class="btn"
+                                th:classappend="${s == 'ordered' ? 'btn-primary' : (s == 'received' ? 'btn-success' : (s == 'cancelled' ? 'btn-danger' : 'btn-outline'))}"
+                                type="submit">
+                            <span th:text="${s == 'ordered' ? 'Send to supplier' : (s == 'partial' ? 'Mark partially received' : (s == 'received' ? 'Mark received' : (s == 'cancelled' ? 'Cancel order' : s)))}">action</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Summary -->
+            <div class="grid grid-3 mb-4">
+                <section class="card card-pad">
+                    <div class="section-title">Order</div>
+                    <dl class="dl">
+                        <dt>Supplier</dt><dd th:text="${po.supplier.name}">Supplier</dd>
+                        <dt>Order date</dt>
+                        <dd th:text="${po.orderDate != null ? #temporals.format(po.orderDate, 'dd MMM yyyy') : '—'}">date</dd>
+                        <dt>Expected</dt>
+                        <dd th:text="${po.expectedDate != null ? #temporals.format(po.expectedDate, 'dd MMM yyyy') : '—'}">date</dd>
+                    </dl>
+                </section>
+                <section class="card card-pad">
+                    <div class="section-title">Totals</div>
+                    <dl class="dl">
+                        <dt>Lines</dt><dd th:text="${#lists.size(po.items)}">0</dd>
+                        <dt>Units ordered</dt><dd th:text="${po.totalQuantity()}">0</dd>
+                        <dt>Order value</dt>
+                        <dd th:text="'৳' + ${#numbers.formatDecimal(po.totalValue(), 1, 'COMMA', 2, 'POINT')}">৳0</dd>
+                    </dl>
+                </section>
+                <section class="card card-pad">
+                    <div class="section-title">Stock effect</div>
+                    <p class="small muted" style="margin:0;">
+                        Nothing has been added to stock yet. Stock increases only when goods are physically
+                        received against one of this order's shipments.
+                    </p>
+                </section>
+            </div>
+
+            <!-- Lines with received/remaining -->
+            <section class="card mb-4">
+                <div class="card-head">
+                    <h2>Order lines</h2>
+                    <span class="card-sub">Ordered · received · remaining</span>
+                </div>
+                <div class="table-wrap">
+                    <table class="data">
+                        <thead>
+                        <tr>
+                            <th>Variant</th>
+                            <th>SKU</th>
+                            <th class="num">Ordered</th>
+                            <th class="num">Received</th>
+                            <th class="num">Remaining</th>
+                            <th class="num">Unit cost</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="line : ${receivingLines}">
+                            <td data-label="Variant" th:text="${line.productName}">Product</td>
+                            <td data-label="SKU" class="mono" th:text="${line.sku}">SKU</td>
+                            <td data-label="Ordered" class="num" th:text="${line.ordered()}">0</td>
+                            <td data-label="Received" class="num strong" th:text="${line.received()}">0</td>
+                            <td data-label="Remaining" class="num">
+                                <span th:classappend="${line.remaining() > 0} ? 'delta-down' : 'delta-up'"
+                                      th:text="${line.remaining()}">0</span>
+                            </td>
+                            <td data-label="Unit cost" class="num muted">—</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <div class="grid grid-2" style="align-items:start;">
+
+                <!-- Shipments -->
+                <section class="card">
+                    <div class="card-head">
+                        <h2>Shipments</h2>
+                        <span class="card-sub">Ordered → Dispatched → In Transit → Arrived → Receiving → Completed</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="timeline" th:if="${!#lists.isEmpty(shipments)}">
+                            <li th:each="s : ${shipments}">
+                                <div class="tl-time">
+                                    Expected
+                                    <span th:text="${s.expectedArrivalDate != null ? #temporals.format(s.expectedArrivalDate, 'dd MMM yyyy') : '—'}">date</span>
+                                    <span th:if="${s.dispatchDate != null}">
+                                        · dispatched <span th:text="${#temporals.format(s.dispatchDate, 'dd MMM')}">date</span>
+                                    </span>
+                                </div>
+                                <div class="tl-title flex" style="gap:8px;">
+                                    <span th:text="${s.shipmentReference != null} ? ${s.shipmentReference} : 'Shipment #' + ${s.id}">Shipment</span>
+                                    <span class="badge"
+                                          th:classappend="${s.status == 'completed' ? 'badge-success' : (s.status == 'cancelled' ? 'badge-danger' : 'badge-info')}"
+                                          th:text="${s.status.replace('_', ' ')}">ordered</span>
+                                </div>
+                                <div class="tl-note">
+                                    <a th:href="@{/admin/receiving(shipment=${s.id})}">Open in goods receiving</a>
+                                </div>
+                            </li>
+                        </div>
+                        <p class="small muted" th:if="${#lists.isEmpty(shipments)}">No shipments booked yet.</p>
+
+                        <hr class="divider">
+
+                        <div class="section-title">Book a shipment</div>
+                        <form th:action="@{/admin/purchase-orders/{id}/shipments(id=${po.id})}" method="post">
+                            <div class="form-grid">
+                                <div class="field">
+                                    <label for="reference">Reference</label>
+                                    <input class="input" type="text" id="reference" name="reference"
+                                           placeholder="SHP-2026-001">
+                                </div>
+                                <div class="field">
+                                    <label for="dispatchDate">Dispatch date</label>
+                                    <input class="input" type="date" id="dispatchDate" name="dispatchDate">
+                                </div>
+                                <div class="field span-2">
+                                    <label for="expectedArrival">Expected arrival <span class="req">*</span></label>
+                                    <input class="input" type="date" id="expectedArrival" name="expectedArrival" required>
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button class="btn btn-outline" type="submit">
+                                    <i class="fa-solid fa-ship"></i> Book shipment
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- Receipts -->
+                <section class="card">
+                    <div class="card-head">
+                        <h2>Goods receipts</h2>
+                        <a class="small" th:if="${!#lists.isEmpty(receivableShipments)}"
+                           th:href="@{/admin/receiving}">Open receiving <i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                    <div class="card-body flush">
+                        <div class="table-wrap" th:if="${!#lists.isEmpty(receipts)}">
+                            <table class="data">
+                                <thead>
+                                <tr>
+                                    <th>Receipt</th><th>Warehouse</th><th>By</th><th>When</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="r : ${receipts}">
+                                    <td data-label="Receipt" class="mono strong" th:text="'#' + ${r.id}">#1</td>
+                                    <td data-label="Warehouse" th:text="${r.warehouse.name}">Warehouse</td>
+                                    <td data-label="By" th:text="${r.receivedBy != null ? r.receivedBy : '—'}">—</td>
+                                    <td data-label="When" class="small muted nowrap"
+                                        th:text="${#temporals.format(r.receivedAt, 'dd MMM yyyy HH:mm')}">when</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="empty" th:if="${#lists.isEmpty(receipts)}">
+                            <i class="fa-solid fa-box-open"></i>
+                            <strong>Nothing received yet</strong>
+                            <p>When a shipment arrives, receive it from Goods Receiving.</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <th:block th:replace="~{admin/fragments :: bottomNav('inventory')}"></th:block>
+    </div>
+</div>
+<th:block th:replace="~{admin/fragments :: scripts}"></th:block>
+</body>
+</html>

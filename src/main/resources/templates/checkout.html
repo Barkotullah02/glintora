@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Checkout')}"></head>
+<body>
+
+<div th:replace="~{layout :: header}"></div>
+
+<div class="container" style="padding-top:48px;">
+    <p class="eyebrow">Almost there</p>
+    <h1 class="page-title">Checkout</h1>
+
+    <div class="notice notice-error" th:if="${checkoutError}" th:text="${checkoutError}"></div>
+
+    <div class="checkout-layout">
+        <!-- form -->
+        <form th:action="@{/checkout}" method="post">
+            <section class="panel" style="margin-bottom:24px;">
+                <h4 class="pdp-label" style="margin-bottom:20px;">Delivery address</h4>
+                <div class="field">
+                    <label for="receiver">Receiver</label>
+                    <input type="text" id="receiver" class="input" th:value="${customer?.name}" disabled>
+                </div>
+                <div class="field">
+                    <label for="address">Address <span aria-hidden="true">*</span></label>
+                    <textarea id="address" name="address" class="input" rows="3" required
+                              placeholder="House, road, area"></textarea>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                    <div class="field" style="margin-bottom:0;">
+                        <label for="city">City <span aria-hidden="true">*</span></label>
+                        <input type="text" id="city" name="city" class="input" required placeholder="Dhaka">
+                    </div>
+                    <div class="field" style="margin-bottom:0;">
+                        <label for="postalCode">Postal code</label>
+                        <input type="text" id="postalCode" name="postalCode" class="input" placeholder="1200">
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel" style="margin-bottom:24px;">
+                <h4 class="pdp-label" style="margin-bottom:20px;">Payment method</h4>
+                <label class="line-item" style="grid-template-columns:auto 1fr; align-items:center; padding:14px 0; border-bottom:var(--hairline); cursor:pointer;">
+                    <input type="radio" name="paymentMethod" value="COD" checked>
+                    <span>
+                        <span style="font-size:14.5px;">Cash on delivery</span><br>
+                        <span class="text-faint" style="font-size:12px;">Pay when your order arrives</span>
+                    </span>
+                </label>
+                <label class="line-item" style="grid-template-columns:auto 1fr; align-items:center; padding:14px 0; border-bottom:0; cursor:pointer;">
+                    <input type="radio" name="paymentMethod" value="bKash" disabled>
+                    <span>
+                        <span style="font-size:14.5px;">bKash</span><br>
+                        <span class="text-faint" style="font-size:12px;">Coming soon</span>
+                    </span>
+                </label>
+            </section>
+
+            <button type="submit" class="btn btn-primary btn-lg btn-block">Place order</button>
+            <p class="text-faint" style="font-size:12px; margin-top:12px;">
+                Stock is reserved for you the moment the order is placed, and deducted when it ships.
+            </p>
+        </form>
+
+        <!-- order summary -->
+        <aside class="panel summary-card">
+            <h4 class="pdp-label" style="margin-bottom:16px;">Order summary</h4>
+            <div class="summary-row" th:each="line : ${lines}">
+                <span class="text-soft">
+                    <span th:text="${line.productName}">Product</span>
+                    <span class="text-faint" th:text="' × ' + ${line.quantity}"> × 1</span>
+                </span>
+                <span th:text="'৳' + ${#numbers.formatDecimal(line.lineTotal(), 1, 'COMMA', 2, 'POINT')}">৳0</span>
+            </div>
+            <div class="summary-row" style="border-top:var(--hairline); margin-top:12px; padding-top:12px;">
+                <span class="text-soft">Subtotal</span>
+                <span th:text="'৳' + ${#numbers.formatDecimal(subtotal, 1, 'COMMA', 2, 'POINT')}">৳0</span>
+            </div>
+            <div class="summary-row">
+                <span class="text-soft">Shipping</span>
+                <span th:text="'৳' + ${#numbers.formatDecimal(shippingFee, 1, 'COMMA', 2, 'POINT')}">৳60</span>
+            </div>
+            <div class="summary-row total">
+                <span>Grand total</span>
+                <span th:text="'৳' + ${#numbers.formatDecimal(grandTotal, 1, 'COMMA', 2, 'POINT')}">৳0</span>
+            </div>
+        </aside>
+    </div>
+</div>
+
+<div th:replace="~{layout :: footer}"></div>
+<div th:replace="~{layout :: scripts}"></div>
+</body>
+</html>

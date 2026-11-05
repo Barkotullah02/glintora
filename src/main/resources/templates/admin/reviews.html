@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/fragments :: head('Product Reviews')}"></head>
+<body class="admin-body">
+<div class="admin-shell">
+
+    <th:block th:replace="~{admin/fragments :: sidebar('reviews')}"></th:block>
+
+    <div class="admin-main">
+        <th:block th:replace="~{admin/fragments :: topbar}"></th:block>
+
+        <main class="admin-content">
+            <th:block th:replace="~{admin/fragments :: flash}"></th:block>
+
+            <nav class="crumbs" aria-label="Breadcrumb">
+                <a th:href="@{/admin}">Dashboard</a><span class="sep">/</span>
+                <a th:href="@{/admin/products}">Catalog</a><span class="sep">/</span>
+                <span class="current">Product reviews</span>
+            </nav>
+
+            <div class="page-head">
+                <div>
+                    <h1 class="page-title">Product reviews</h1>
+                    <p class="page-desc">Moderate customer reviews before they appear on the storefront.</p>
+                </div>
+            </div>
+
+            <!-- Status tabs -->
+            <div class="tabs">
+                <a class="tab" th:classappend="${statusFilter == 'all'} ? 'active'"
+                   th:href="@{/admin/reviews}">
+                    All <span class="tab-count" th:text="${pendingCount + approvedCount + rejectedCount}">0</span>
+                </a>
+                <a class="tab" th:classappend="${statusFilter == 'pending'} ? 'active'"
+                   th:href="@{/admin/reviews(status='pending')}">
+                    Pending <span class="tab-count" th:text="${pendingCount}">0</span>
+                </a>
+                <a class="tab" th:classappend="${statusFilter == 'approved'} ? 'active'"
+                   th:href="@{/admin/reviews(status='approved')}">
+                    Approved <span class="tab-count" th:text="${approvedCount}">0</span>
+                </a>
+                <a class="tab" th:classappend="${statusFilter == 'rejected'} ? 'active'"
+                   th:href="@{/admin/reviews(status='rejected')}">
+                    Rejected <span class="tab-count" th:text="${rejectedCount}">0</span>
+                </a>
+            </div>
+
+            <section class="card" th:if="${!#lists.isEmpty(reviews)}">
+                <div class="table-wrap">
+                    <table class="data">
+                        <thead>
+                        <tr>
+                            <th>Review</th>
+                            <th>Customer</th>
+                            <th>Product</th>
+                            <th>Rating</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="r : ${reviews}">
+                            <td data-label="Review" class="cell-block">
+                                <span class="cell-text">
+                                    <strong>
+                                        <span th:each="i : ${#numbers.sequence(1, r.rating)}" style="color:var(--color-warning);">★</span>
+                                        <span th:each="i : ${#numbers.sequence(r.rating + 1, 5)}"
+                                              style="color:var(--color-border);">★</span>
+                                    </strong>
+                                    <span th:text="${r.reviewText != null ? r.reviewText : '(no text)'}">text</span>
+                                </span>
+                                <div class="small muted"
+                                     th:text="${#temporals.format(r.createdAt, 'dd MMM yyyy')}">date</div>
+                            </td>
+                            <td data-label="Customer" class="cell-block">
+                                <span th:text="${r.customer.name}">Customer</span>
+                                <div class="small muted" th:text="${r.customer.email}">email</div>
+                            </td>
+                            <td data-label="Product" th:text="${r.product.name}">Product</td>
+                            <td data-label="Rating" class="strong" th:text="${r.rating} + '/5'">5/5</td>
+                            <td data-label="Status">
+                                <span class="badge"
+                                      th:classappend="${r.status == 'approved' ? 'badge-success' : (r.status == 'rejected' ? 'badge-danger' : 'badge-warning')}"
+                                      th:text="${r.status}">pending</span>
+                            </td>
+                            <td data-label="" class="right">
+                                <div class="row-actions">
+                                    <form th:unless="${r.status == 'approved'}"
+                                          th:action="@{/admin/reviews/{id}/status(id=${r.id})}" method="post" class="inline">
+                                        <input type="hidden" name="status" value="approved">
+                                        <button class="btn btn-success btn-sm" type="submit">
+                                            <i class="fa-solid fa-check"></i> Approve
+                                        </button>
+                                    </form>
+                                    <form th:unless="${r.status == 'rejected'}"
+                                          th:action="@{/admin/reviews/{id}/status(id=${r.id})}" method="post" class="inline">
+                                        <input type="hidden" name="status" value="rejected">
+                                        <button class="btn btn-outline btn-sm" type="submit">
+                                            <i class="fa-solid fa-xmark"></i> Reject
+                                        </button>
+                                    </form>
+                                    <form th:unless="${r.status == 'pending'}"
+                                          th:action="@{/admin/reviews/{id}/status(id=${r.id})}" method="post" class="inline">
+                                        <input type="hidden" name="status" value="pending">
+                                        <button class="btn btn-ghost btn-sm" type="submit">Reset</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="card" th:if="${#lists.isEmpty(reviews)}">
+                <div class="empty">
+                    <i class="fa-solid fa-star"></i>
+                    <strong>No reviews in this state</strong>
+                    <p>Customer reviews appear here for moderation.</p>
+                    <a class="btn btn-outline" th:if="${statusFilter != 'all'}"
+                       th:href="@{/admin/reviews}">Show all</a>
+                </div>
+            </section>
+        </main>
+
+        <th:block th:replace="~{admin/fragments :: bottomNav('products')}"></th:block>
+    </div>
+</div>
+<th:block th:replace="~{admin/fragments :: scripts}"></th:block>
+</body>
+</html>

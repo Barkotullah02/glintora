@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800" viewBox="0 0 600 800">
+  <rect width="600" height="800" fill="#f1f3f5"/>
+  <g transform="translate(300 380)">
+    <path d="M-90 -70 L-40 -110 L40 -110 L90 -70 L60 -40 L45 -55 L45 110 L-45 110 L-45 -55 L-60 -40 Z"
+          fill="#c9a227" opacity="0.85"/>
+  </g>
+  <text x="300" y="580" text-anchor="middle" font-family="Segoe UI, sans-serif"
+        font-size="28" fill="#8a8f98" letter-spacing="6">GLINTORA</text>
+  <text x="300" y="620" text-anchor="middle" font-family="Segoe UI, sans-serif"
+        font-size="16" fill="#adb5bd">product image</text>
+</svg>

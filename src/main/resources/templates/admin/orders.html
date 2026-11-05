@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/fragments :: head('Orders')}"></head>
+<body class="admin-body">
+<div class="admin-shell">
+
+    <th:block th:replace="~{admin/fragments :: sidebar('orders')}"></th:block>
+
+    <div class="admin-main">
+        <th:block th:replace="~{admin/fragments :: topbar}"></th:block>
+
+        <main class="admin-content">
+            <th:block th:replace="~{admin/fragments :: flash}"></th:block>
+
+            <nav class="crumbs" aria-label="Breadcrumb">
+                <a th:href="@{/admin}">Dashboard</a><span class="sep">/</span><span class="current">Orders</span>
+            </nav>
+
+            <div class="page-head">
+                <div>
+                    <h1 class="page-title">Orders</h1>
+                    <p class="page-desc">Payment and fulfillment are tracked separately — an order can be paid but not yet shipped.</p>
+                </div>
+                <div class="page-actions">
+                    <form class="flex" style="gap:8px;" method="get" th:action="@{/admin/orders}">
+                        <input class="input" type="search" name="q" th:value="${q}"
+                               placeholder="Search #id, name or email…" aria-label="Search orders"
+                               style="min-width:240px;">
+                        <button class="btn btn-primary" type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Status tabs with counts -->
+            <div class="tabs">
+                <a class="tab" th:classappend="${statusFilter == 'all'} ? 'active'"
+                   th:href="@{/admin/orders(q=${q})}">
+                    All <span class="tab-count" th:text="${statusCounts['all']}">0</span>
+                </a>
+                <a class="tab" th:each="entry : ${statusCounts}" th:if="${entry.key != 'all'}"
+                   th:classappend="${statusFilter == entry.key} ? 'active'"
+                   th:href="@{/admin/orders(status=${entry.key}, q=${q})}">
+                    <span th:text="${entry.key}">status</span>
+                    <span class="tab-count" th:text="${entry.value}">0</span>
+                </a>
+            </div>
+
+            <section class="card" th:if="${!#lists.isEmpty(orders)}">
+                <div class="table-wrap">
+                    <table class="data">
+                        <thead>
+                        <tr>
+                            <th>Order</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th class="num">Total</th>
+                            <th>Payment</th>
+                            <th>Fulfillment</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="o : ${orders}">
+                            <td data-label="Order">
+                                <a class="mono strong" th:href="@{/admin/orders/{id}(id=${o.id})}"
+                                   th:text="'#' + ${o.id}">#1</a>
+                                <div class="small muted" th:text="${o.salesChannel.name}">Website</div>
+                            </td>
+                            <td data-label="Customer" class="cell-block">
+                                <strong th:text="${o.customer.name}">Customer</strong>
+                                <div class="small muted" th:text="${o.customer.email}">email</div>
+                            </td>
+                            <td data-label="Date" class="small muted nowrap"
+                                th:text="${#temporals.format(o.orderDate, 'dd MMM yyyy, HH:mm')}">date</td>
+                            <td data-label="Total" class="num strong"
+                                th:text="'৳' + ${#numbers.formatDecimal(o.grandTotal, 1, 'COMMA', 2, 'POINT')}">৳0</td>
+                            <td data-label="Payment">
+                                <span class="badge"
+                                      th:classappend="${o.paymentStatusSummary() == 'paid' ? 'badge-success' : (o.paymentStatusSummary() == 'failed' ? 'badge-danger' : (o.paymentStatusSummary() == 'refunded' ? 'badge-muted' : 'badge-warning'))}"
+                                      th:text="${o.paymentStatusSummary()}">pending</span>
+                            </td>
+                            <td data-label="Fulfillment">
+                                <span class="badge"
+                                      th:classappend="${o.status.name() == 'delivered' ? 'badge-success' : ((o.status.name() == 'cancelled' or o.status.name() == 'returned') ? 'badge-danger' : (o.status.name() == 'pending' ? 'badge-warning' : 'badge-info'))}"
+                                      th:text="${o.fulfillmentStatusSummary()}">awaiting confirmation</span>
+                            </td>
+                            <td data-label="" class="right">
+                                <div class="row-actions">
+                                    <a class="btn btn-outline btn-sm" th:href="@{/admin/orders/{id}(id=${o.id})}">
+                                        Open <i class="fa-solid fa-arrow-right"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="card" th:if="${#lists.isEmpty(orders)}">
+                <div class="empty">
+                    <i class="fa-solid fa-receipt"></i>
+                    <strong>No orders found</strong>
+                    <p>Try another status tab or search term.</p>
+                    <a class="btn btn-outline" th:if="${statusFilter != 'all' or q != null}"
+                       th:href="@{/admin/orders}">Clear filters</a>
+                </div>
+            </section>
+        </main>
+
+        <th:block th:replace="~{admin/fragments :: bottomNav('orders')}"></th:block>
+    </div>
+</div>
+<th:block th:replace="~{admin/fragments :: scripts}"></th:block>
+</body>
+</html>

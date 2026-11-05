@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800" viewBox="0 0 600 800">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6e1430"/>
+      <stop offset="100%" stop-color="#8c2a45"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="800" fill="url(#g)"/>
+  <g transform="translate(300 355)" fill="none" stroke="#f0d9a8" stroke-width="6" opacity="0.9">
+    <path d="M-100 -75 L-45 -120 L45 -120 L100 -75 L65 -42 L48 -58 L48 120 L-48 120 L-48 -58 L-65 -42 Z"/>
+    <path d="M-70 60 Q0 100 70 60"/>
+    <circle cx="0" cy="-15" r="20"/>
+  </g>
+  <text x="300" y="600" text-anchor="middle" font-family="Segoe UI, sans-serif"
+        font-size="24" fill="#fdf6ec" letter-spacing="4">THREE PIECE</text>
+  <text x="300" y="636" text-anchor="middle" font-family="Segoe UI, sans-serif"
+        font-size="16" fill="#f3d9e2">GLI-003</text>
+</svg>

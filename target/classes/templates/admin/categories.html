@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/fragments :: head('Categories')}"></head>
+<body class="admin-body">
+<div class="admin-shell">
+
+    <th:block th:replace="~{admin/fragments :: sidebar('categories')}"></th:block>
+
+    <div class="admin-main">
+        <th:block th:replace="~{admin/fragments :: topbar}"></th:block>
+
+        <main class="admin-content">
+            <th:block th:replace="~{admin/fragments :: flash}"></th:block>
+
+            <nav class="crumbs" aria-label="Breadcrumb">
+                <a th:href="@{/admin}">Dashboard</a><span class="sep">/</span>
+                <a th:href="@{/admin/products}">Catalog</a><span class="sep">/</span>
+                <span class="current">Categories</span>
+            </nav>
+
+            <div class="page-head">
+                <div>
+                    <h1 class="page-title">Categories</h1>
+                    <p class="page-desc">Organise the catalogue. Categories can be nested under a parent.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-2" style="align-items:start;">
+
+                <section class="card" th:if="${!#lists.isEmpty(categories)}">
+                    <div class="table-wrap">
+                        <table class="data">
+                            <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Parent</th>
+                                <th class="num">Products</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="c : ${categories}">
+                                <td data-label="Category">
+                                    <strong th:text="${c.name}">Category</strong>
+                                </td>
+                                <td data-label="Parent" th:text="${c.parentCategory != null ? c.parentCategory.name : '—'}">—</td>
+                                <td data-label="Products" class="num"
+                                    th:text="${productCounts[c.id] != null ? productCounts[c.id] : 0}">0</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="card" th:if="${#lists.isEmpty(categories)}">
+                    <div class="empty">
+                        <i class="fa-solid fa-layer-group"></i>
+                        <strong>No categories yet</strong>
+                        <p>Create the first category to organise products.</p>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <div class="card-head"><h2>Add category</h2></div>
+                    <div class="card-body">
+                        <form th:action="@{/admin/categories}" method="post">
+                            <div class="form-grid">
+                                <div class="field span-2">
+                                    <label for="catName">Name <span class="req">*</span></label>
+                                    <input class="input" type="text" id="catName" name="name" required
+                                           placeholder="Women">
+                                </div>
+                                <div class="field span-2">
+                                    <label for="parentId">Parent category</label>
+                                    <select class="select" id="parentId" name="parentId">
+                                        <option value="">— top level —</option>
+                                        <option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.name}">Category</option>
+                                    </select>
+                                    <span class="hint">Leave empty for a top-level category.</span>
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="fa-solid fa-plus"></i> Add category
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <th:block th:replace="~{admin/fragments :: bottomNav('products')}"></th:block>
+    </div>
+</div>
+<th:block th:replace="~{admin/fragments :: scripts}"></th:block>
+</body>
+</html>

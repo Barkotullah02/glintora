@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Login')}"></head>
+<body>
+
+<div th:replace="~{layout :: header}"></div>
+
+<div class="auth-wrap">
+    <p class="eyebrow" style="text-align:center;">Welcome back</p>
+    <h1 class="auth-title">Sign in</h1>
+    <p class="auth-sub">Access your orders, saved pieces and faster checkout.</p>
+
+    <div class="notice notice-success" th:if="${registered}">Account created — please sign in.</div>
+    <div class="notice notice-error" th:if="${param.error}">Invalid email or password.</div>
+    <div class="notice" th:if="${param.logout}">You have been signed out.</div>
+
+    <form th:action="@{/login}" method="post">
+        <div class="field">
+            <label for="username">Email</label>
+            <input type="email" id="username" name="username" class="input" required autofocus>
+        </div>
+        <div class="field">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" class="input" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block btn-lg">Sign in</button>
+    </form>
+
+    <p class="auth-alt">New to Glintora? <a th:href="@{/register}">Create an account</a></p>
+</div>
+
+<div th:replace="~{layout :: footer}"></div>
+<div th:replace="~{layout :: scripts}"></div>
+</body>
+</html>

@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" role="img" aria-label="Women's collection">
+  <defs>
+    <linearGradient id="wbg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#EFEDE7"/>
+      <stop offset="1" stop-color="#E5E2D9"/>
+    </linearGradient>
+    <linearGradient id="wdress" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#A6AE99"/>
+      <stop offset="1" stop-color="#87917C"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="800" height="1000" fill="url(#wbg)"/>
+  <path d="M150 1000 V440 a250 250 0 0 1 500 0 V1000 Z" fill="#EAE7DF"/>
+
+  <g>
+    <circle cx="400" cy="290" r="46" fill="#252525" opacity="0.82"/>
+    <path d="M400 344
+             c-84 0 -130 58 -148 142
+             l-72 514 h440
+             l-72 -514
+             c-18 -84 -64 -142 -148 -142 Z"
+          fill="url(#wdress)"/>
+    <!-- flowing panel -->
+    <path d="M336 500 q64 40 128 0 l30 330 q-94 34 -188 0 Z" fill="#F8F7F4" opacity="0.26"/>
+    <!-- motif -->
+    <g stroke="#F8F7F4" stroke-width="2.2" fill="none" opacity="0.72">
+      <circle cx="400" cy="590" r="22"/>
+      <path d="M400 562 v56 M372 590 h56 M381 571 l38 38 M419 571 l-38 38"/>
+    </g>
+  </g>
+
+  <ellipse cx="400" cy="930" rx="210" ry="18" fill="#252525" opacity="0.05"/>
+</svg>

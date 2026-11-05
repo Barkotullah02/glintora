@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1100" role="img" aria-label="Editorial fashion image">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#EFEDE7"/>
+      <stop offset="1" stop-color="#E4E1D8"/>
+    </linearGradient>
+    <linearGradient id="drape" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#87917C"/>
+      <stop offset="1" stop-color="#6E7765"/>
+    </linearGradient>
+    <linearGradient id="drape2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#D8D3C6"/>
+      <stop offset="1" stop-color="#C7C1B1"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="900" height="1100" fill="url(#bg)"/>
+
+  <!-- soft backdrop arch -->
+  <path d="M180 1100 V520 a270 270 0 0 1 540 0 V1100 Z" fill="#EAE7DF"/>
+
+  <!-- stylised figure: long draped silhouette -->
+  <g>
+    <!-- head -->
+    <circle cx="450" cy="330" r="52" fill="#252525" opacity="0.85"/>
+    <!-- body / garment -->
+    <path d="M450 392
+             c-96 0 -150 66 -168 160
+             l-52 468 h440
+             l-52 -468
+             c-18 -94 -72 -160 -168 -160 Z"
+          fill="url(#drape)"/>
+    <!-- sash accent -->
+    <path d="M382 560 q68 44 136 0 l26 236 q-94 40 -188 0 Z" fill="#F8F7F4" opacity="0.28"/>
+    <!-- embroidered motif -->
+    <g stroke="#F8F7F4" stroke-width="2.4" fill="none" opacity="0.7">
+      <circle cx="450" cy="640" r="26"/>
+      <path d="M450 606 v68 M416 640 h68 M427 617 l46 46 M473 617 l-46 46"/>
+    </g>
+    <!-- hair sweep -->
+    <path d="M404 318 q46 -66 96 0 q-24 -22 -48 -14 q-26 8 -48 14 Z" fill="#252525"/>
+  </g>
+
+  <!-- ground shadow -->
+  <ellipse cx="450" cy="1030" rx="240" ry="22" fill="#252525" opacity="0.06"/>
+
+  <!-- draping fabric corner -->
+  <path d="M0 0 h300 q-120 220 -300 300 Z" fill="url(#drape2)" opacity="0.55"/>
+</svg>

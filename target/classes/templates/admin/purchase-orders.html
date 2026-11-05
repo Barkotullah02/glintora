@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/fragments :: head('Purchase Orders')}"></head>
+<body class="admin-body">
+<div class="admin-shell">
+
+    <th:block th:replace="~{admin/fragments :: sidebar('purchase-orders')}"></th:block>
+
+    <div class="admin-main">
+        <th:block th:replace="~{admin/fragments :: topbar}"></th:block>
+
+        <main class="admin-content">
+            <th:block th:replace="~{admin/fragments :: flash}"></th:block>
+
+            <nav class="crumbs" aria-label="Breadcrumb">
+                <a th:href="@{/admin}">Dashboard</a><span class="sep">/</span>
+                <a th:href="@{/admin/inventory}">Inventory</a><span class="sep">/</span>
+                <span class="current">Purchase orders</span>
+            </nav>
+
+            <div class="page-head">
+                <div>
+                    <h1 class="page-title">Purchase orders</h1>
+                    <p class="page-desc">
+                        A purchase order records what was ordered. It never increases sellable stock — stock moves on receiving.
+                    </p>
+                </div>
+                <div class="page-actions">
+                    <a class="btn btn-primary" th:href="@{/admin/purchase-orders/new}">
+                        <i class="fa-solid fa-plus"></i> New purchase order
+                    </a>
+                </div>
+            </div>
+
+            <!-- Status tabs -->
+            <div class="tabs">
+                <a class="tab" th:classappend="${statusFilter == 'all'} ? 'active'"
+                   th:href="@{/admin/purchase-orders}">
+                    All <span class="tab-count" th:text="${statusCounts['all']}">0</span>
+                </a>
+                <a class="tab" th:each="entry : ${statusCounts}" th:if="${entry.key != 'all'}"
+                   th:classappend="${statusFilter == entry.key} ? 'active'"
+                   th:href="@{/admin/purchase-orders(status=${entry.key})}">
+                    <span th:text="${entry.key}">status</span>
+                    <span class="tab-count" th:text="${entry.value}">0</span>
+                </a>
+            </div>
+
+            <section class="card" th:if="${!#lists.isEmpty(purchaseOrders)}">
+                <div class="table-wrap">
+                    <table class="data">
+                        <thead>
+                        <tr>
+                            <th>PO</th>
+                            <th>Supplier</th>
+                            <th>Order date</th>
+                            <th>Expected</th>
+                            <th class="num">Lines</th>
+                            <th class="num">Units</th>
+                            <th class="num">Value</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="po : ${purchaseOrders}">
+                            <td data-label="PO">
+                                <a class="mono strong" th:href="@{/admin/purchase-orders/{id}(id=${po.id})}"
+                                   th:text="'PO-' + ${po.id}">PO-1</a>
+                            </td>
+                            <td data-label="Supplier" th:text="${po.supplier.name}">Supplier</td>
+                            <td data-label="Order date" class="nowrap"
+                                th:text="${po.orderDate != null ? #temporals.format(po.orderDate, 'dd MMM yyyy') : '—'}">date</td>
+                            <td data-label="Expected" class="nowrap"
+                                th:text="${po.expectedDate != null ? #temporals.format(po.expectedDate, 'dd MMM yyyy') : '—'}">date</td>
+                            <td data-label="Lines" class="num" th:text="${#lists.size(po.items)}">0</td>
+                            <td data-label="Units" class="num" th:text="${po.totalQuantity()}">0</td>
+                            <td data-label="Value" class="num strong"
+                                th:text="'৳' + ${#numbers.formatDecimal(po.totalValue(), 1, 'COMMA', 2, 'POINT')}">৳0</td>
+                            <td data-label="Status">
+                                <span class="badge"
+                                      th:classappend="${po.status == 'received' ? 'badge-success' : (po.status == 'cancelled' ? 'badge-danger' : (po.status == 'draft' ? 'badge-muted' : 'badge-info'))}"
+                                      th:text="${po.status}">draft</span>
+                            </td>
+                            <td data-label="" class="right">
+                                <div class="row-actions">
+                                    <a class="btn btn-outline btn-sm" th:href="@{/admin/purchase-orders/{id}(id=${po.id})}">
+                                        Open <i class="fa-solid fa-arrow-right"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="card" th:if="${#lists.isEmpty(purchaseOrders)}">
+                <div class="empty">
+                    <i class="fa-solid fa-file-invoice"></i>
+                    <strong>No purchase orders in this state</strong>
+                    <p>Create a draft PO from a supplier or from a reorder suggestion.</p>
+                    <a class="btn btn-primary" th:href="@{/admin/purchase-orders/new}">
+                        <i class="fa-solid fa-plus"></i> New purchase order
+                    </a>
+                </div>
+            </section>
+        </main>
+
+        <th:block th:replace="~{admin/fragments :: bottomNav('inventory')}"></th:block>
+    </div>
+</div>
+<th:block th:replace="~{admin/fragments :: scripts}"></th:block>
+</body>
+</html>

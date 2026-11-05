@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head(${product.name})}"></head>
+<body>
+
+<div th:replace="~{layout :: header}"></div>
+
+<div class="container" id="pdpRoot">
+
+    <nav class="text-faint" style="font-size:12px; padding:24px 0 0;">
+        <a th:href="@{/shop}">Shop</a>
+        <span> / </span>
+        <span th:if="${product.category != null}">
+            <a th:href="@{/shop(category=${product.category.id})}" th:text="${product.category.name}">Category</a>
+            <span> / </span>
+        </span>
+        <span th:text="${product.name}">Product</span>
+    </nav>
+
+    <div class="pdp">
+
+        <!-- ====================================================== gallery -->
+        <div class="gallery">
+            <div class="gallery-main">
+                <img id="galleryMain" th:src="${detail.primaryImageUrl}" th:alt="${product.name}">
+            </div>
+            <div class="gallery-thumbs" th:if="${#lists.size(product.images) > 1}">
+                <button type="button" data-gallery-thumb th:attr="data-gallery-thumb=${img.imageUrl}"
+                        th:aria-current="${img.imageUrl == detail.primaryImageUrl} ? 'true' : 'false'"
+                        th:each="img : ${product.images}">
+                    <img th:src="${img.imageUrl}" th:alt="'View ' + ${img.id}">
+                </button>
+            </div>
+        </div>
+
+        <!-- ========================================================= info -->
+        <div class="pdp-info">
+            <div class="pdp-brand" th:text="${product.brand?.name} ?: 'Glintora'">Brand</div>
+            <h1 class="pdp-title" th:text="${product.name}">Product</h1>
+
+            <div class="pdp-price" id="pdpPrice"
+                 th:text="${!detail.variants.isEmpty()
+                     ? '৳' + #numbers.formatDecimal(detail.variants[0].price, 1, 'COMMA', 2, 'POINT')
+                     : '—'}">৳0.00</div>
+
+            <p class="pdp-desc" th:if="${product.description != null}" th:text="${product.description}">Description</p>
+
+            <form th:action="@{/cart/add}" method="post" id="pdpForm">
+                <input type="hidden" name="variantId" value="">
+                <input type="hidden" name="quantity" value="1" id="pdpQty">
+                <input type="hidden" name="redirect" th:value="'/shop/product/' + ${product.productCode}">
+
+                <!-- colours -->
+                <div class="pdp-block" th:if="${!detail.colors.isEmpty()}">
+                    <div class="pdp-block-head">
+                        <span class="pdp-label">Colour</span>
+                    </div>
+                    <div class="chip-row" style="gap:14px;">
+                        <button type="button" class="swatch"
+                                th:each="c : ${detail.colors}"
+                                data-color th:attr="data-color=${c.id()}, title=${c.name()}"
+                                th:style="'background:' + ${c.hex()}">
+                        </button>
+                    </div>
+                </div>
+
+                <!-- sizes -->
+                <div class="pdp-block" th:unless="${detail.variants.isEmpty()}">
+                    <div class="pdp-block-head">
+                        <span class="pdp-label">Size</span>
+                        <span>
+                            <span class="pdp-selection" id="pdpSelection"></span>
+                            <span style="margin-left:12px;">
+                                <button type="button" class="size-guide-toggle" data-size-guide="sizeGuidePanel"
+                                        aria-expanded="false" aria-controls="sizeGuidePanel">Size guide</button>
+                            </span>
+                        </span>
+                    </div>
+                    <div class="chip-row">
+                        <button type="button" class="chip"
+                                th:each="v : ${detail.variants}"
+                                data-variant
+                                th:attr="data-variant=${v.id},
+                                         data-size-id=${v.sizeId},
+                                         data-color-id=${v.colorId},
+                                         data-size-name=${v.sizeName},
+                                         data-color-name=${v.colorName},
+                                         data-price=${v.price},
+                                         data-available=${v.availableNow}">
+                            <span th:text="${v.sizeName ?: v.sku}">M</span>
+                        </button>
+                    </div>
+
+                    <!-- accessible size guide -->
+                    <div class="size-guide-panel" id="sizeGuidePanel" role="region" aria-label="Size guide">
+                        <div th:each="section : ${detail.sizeChart}">
+                            <h4 class="pdp-label" style="margin:0 0 10px;" th:text="${section.section}">Shirt</h4>
+                            <table class="size-chart-table">
+                                <thead>
+                                <tr>
+                                    <th>Measurement</th>
+                                    <th th:each="s : ${section.sizes}" th:text="${s}">M</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="row : ${section.rows}">
+                                    <td th:text="${row.name}">Length</td>
+                                    <td th:each="val : ${row.values}" th:text="${val}">38 inch</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-faint" style="font-size:12px; margin:12px 0 0;"
+                           th:if="${detail.sizeChart.isEmpty()}">Size chart coming soon.</p>
+                    </div>
+                </div>
+
+                <!-- qty + add to cart -->
+                <div class="pdp-block">
+                    <div class="pdp-block-head">
+                        <span class="pdp-label">Quantity</span>
+                    </div>
+                    <div style="display:flex; gap:12px; align-items:stretch;">
+                        <div class="qty-row" data-qty>
+                            <button type="button" data-qty-minus aria-label="Decrease quantity">−</button>
+                            <input type="number" value="1" min="1" max="20" id="pdpQtyInput"
+                                   aria-label="Quantity">
+                            <button type="button" data-qty-plus aria-label="Increase quantity">+</button>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg" style="flex:1;" id="pdpAddToCart">
+                            Add to cart
+                        </button>
+                    </div>
+                    <p class="text-faint" style="font-size:12px; margin-top:12px;"
+                       th:unless="${detail.anyAvailable}">This piece is currently out of stock — check back soon.</p>
+                </div>
+            </form>
+
+            <!-- attributes -->
+            <div class="pdp-block" th:if="${!product.attributes.isEmpty()}">
+                <div class="pdp-block-head"><span class="pdp-label">Details</span></div>
+                <ul class="pdp-attrs">
+                    <li th:each="a : ${product.attributes}">
+                        <span class="k" th:text="${a.attributeName}">Fabric</span>
+                        <span th:text="${a.attributeValue}">Cotton</span>
+                    </li>
+                    <li th:if="${product.material != null}">
+                        <span class="k">Material</span>
+                        <span th:text="${product.material}">Cotton blend</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="pdp-block" style="margin-bottom:0;">
+                <p class="text-faint" style="font-size:12px; margin:0;">
+                    Free exchanges within 7 days · Cash on delivery nationwide
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================================================== reviews -->
+    <section class="section-tight" style="border-top:var(--hairline);">
+        <div class="section-head">
+            <div>
+                <p class="eyebrow">From our clients</p>
+                <h2 class="section-title">Reviews</h2>
+            </div>
+            <span class="text-soft" style="font-size:13px;"
+                  th:if="${detail.reviewCount > 0}"
+                  th:text="${#numbers.formatDecimal(detail.averageRating, 1, 1)} + ' / 5 · ' + ${detail.reviewCount} + ' reviews'">4.5 / 5</span>
+        </div>
+
+        <div th:if="${detail.reviews.isEmpty()}" class="text-faint" style="font-size:14px;">
+            No reviews yet — be the first to share how it fits.
+        </div>
+
+        <div th:each="r : ${detail.reviews}" class="review">
+            <div class="review-head">
+                <span class="review-author" th:text="${r.customer.name}">Customer</span>
+                <span class="review-date" th:text="${#temporals.format(r.createdAt, 'dd MMM yyyy')}">date</span>
+            </div>
+            <div class="review-stars" th:text="'★'.repeat(${r.rating})">★★★★★</div>
+            <p class="review-body" th:text="${r.reviewText}">Review</p>
+        </div>
+    </section>
+
+    <!-- ================================================ related -->
+    <section class="section-tight" th:if="${!related.isEmpty()}" style="border-top:var(--hairline);">
+        <div class="section-head">
+            <div>
+                <p class="eyebrow">Pairs well with</p>
+                <h2 class="section-title">You may also like</h2>
+            </div>
+        </div>
+        <div class="product-grid">
+            <article class="product-card" th:each="p : ${related}">
+                <a class="product-media" th:href="@{/shop/product/{code}(code=${p.productCode})}">
+                    <img th:src="${p.imageUrl}" th:alt="${p.name}" loading="lazy">
+                </a>
+                <div class="product-info">
+                    <div class="product-brand" th:text="${p.brandName} ?: 'Glintora'">Brand</div>
+                    <h3 class="product-name">
+                        <a th:href="@{/shop/product/{code}(code=${p.productCode})}" th:text="${p.name}">Product</a>
+                    </h3>
+                    <div class="product-price" th:text="'৳' + ${p.price}">৳0</div>
+                </div>
+            </article>
+        </div>
+    </section>
+</div>
+
+<!-- ============================================ sticky mobile buy bar -->
+<div class="sticky-buy" id="stickyBuy" th:unless="${detail.variants.isEmpty()}">
+    <span class="price"
+          th:text="'৳' + ${#numbers.formatDecimal(detail.variants[0].price, 1, 'COMMA', 2, 'POINT')}">৳0</span>
+    <form th:action="@{/cart/add}" method="post" style="flex:1; display:flex; gap:12px;">
+        <input type="hidden" name="variantId" value="">
+        <input type="hidden" name="quantity" value="1">
+        <input type="hidden" name="redirect" th:value="'/shop/product/' + ${product.productCode}">
+        <button type="submit" class="btn btn-primary btn-block">Add to cart</button>
+    </form>
+</div>
+
+<div th:replace="~{layout :: footer}"></div>
+<div th:replace="~{layout :: scripts}"></div>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Order confirmed')}"></head>
+<body>
+
+<div th:replace="~{layout :: header}"></div>
+
+<div class="container" style="padding-top:64px; padding-bottom:96px; max-width:760px;">
+    <div class="panel" style="text-align:center; padding:56px 32px;">
+        <i class="fa-solid fa-circle-check" style="font-size:34px; color:var(--sage);"></i>
+        <h1 class="page-title" style="margin-top:16px;">Thank you — your order is confirmed</h1>
+        <p class="text-soft" style="margin-bottom:0;">
+            Order <strong th:text="'#' + ${order.id}">#1</strong> ·
+            <span th:text="${#temporals.format(order.orderDate, 'dd MMM yyyy, hh:mm a')}">date</span>
+        </p>
+    </div>
+
+    <div class="panel" style="margin-top:24px;">
+        <h4 class="pdp-label" style="margin-bottom:8px;">Order summary</h4>
+        <div class="summary-row" th:each="item : ${order.items}">
+            <span class="text-soft">
+                <span th:text="${item.variant.product.name}">Product</span>
+                <span class="text-faint" th:if="${item.variant.size != null}"
+                      th:text="' · ' + ${item.variant.size.sizeName}"></span>
+                <span class="text-faint" th:text="' × ' + ${item.quantity}"> × 1</span>
+            </span>
+            <span th:text="'৳' + ${#numbers.formatDecimal(item.unitPrice.multiply(item.quantity), 1, 'COMMA', 2, 'POINT')}">৳0</span>
+        </div>
+        <div class="summary-row">
+            <span class="text-soft">Shipping</span>
+            <span th:text="'৳' + ${#numbers.formatDecimal(order.shippingFee, 1, 'COMMA', 2, 'POINT')}">৳60</span>
+        </div>
+        <div class="summary-row total">
+            <span>Grand total</span>
+            <span th:text="'৳' + ${#numbers.formatDecimal(order.grandTotal, 1, 'COMMA', 2, 'POINT')}">৳0</span>
+        </div>
+        <p class="text-faint" style="font-size:12px; margin:16px 0 0;">
+            Payment: <span th:text="${order.payments[0]?.paymentMethod} ?: 'COD'">COD</span>
+            (status: <span th:text="${order.payments[0]?.status} ?: 'pending'">pending</span>)
+        </p>
+    </div>
+
+    <div style="display:flex; gap:12px; justify-content:center; margin-top:32px; flex-wrap:wrap;">
+        <a th:href="@{/orders}" class="btn">View my orders</a>
+        <a th:href="@{/shop}" class="btn btn-primary">Continue shopping</a>
+    </div>
+</div>
+
+<div th:replace="~{layout :: footer}"></div>
+<div th:replace="~{layout :: scripts}"></div>
+</body>
+</html>

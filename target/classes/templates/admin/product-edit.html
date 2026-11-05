@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/fragments :: head('Edit Product')}"></head>
+<body class="admin-body">
+<div class="admin-shell">
+
+    <th:block th:replace="~{admin/fragments :: sidebar('products')}"></th:block>
+
+    <div class="admin-main">
+        <th:block th:replace="~{admin/fragments :: topbar}"></th:block>
+
+        <main class="admin-content">
+            <th:block th:replace="~{admin/fragments :: flash}"></th:block>
+
+            <nav class="crumbs" aria-label="Breadcrumb">
+                <a th:href="@{/admin}">Dashboard</a><span class="sep">/</span>
+                <a th:href="@{/admin/products}">Products</a><span class="sep">/</span>
+                <span class="current" th:text="${product.name}">Product</span>
+            </nav>
+
+            <div class="page-head">
+                <div>
+                    <h1 class="page-title" th:text="${product.name}">Product</h1>
+                    <p class="page-desc flex" style="gap:8px;">
+                        <span class="mono" th:text="${product.productCode}">GLI-001</span>
+                        <span class="badge"
+                              th:classappend="${product.status.name() == 'published' ? 'badge-success' : (product.status.name() == 'draft' ? 'badge-muted' : 'badge-warning')}"
+                              th:text="${product.status.name().replace('_', ' ')}">draft</span>
+                        <span class="muted" th:text="'· ' + ${#lists.size(product.variants)} + ' variants'">· 0 variants</span>
+                    </p>
+                </div>
+                <div class="page-actions">
+                    <form th:if="${product.status.name() != 'published'}"
+                          th:action="@{/admin/products/{id}/status(id=${product.id})}" method="post" class="inline">
+                        <input type="hidden" name="status" value="published">
+                        <button class="btn btn-success" type="submit"><i class="fa-solid fa-eye"></i> Publish</button>
+                    </form>
+                    <form th:if="${product.status.name() == 'published'}"
+                          th:action="@{/admin/products/{id}/status(id=${product.id})}" method="post" class="inline">
+                        <input type="hidden" name="status" value="hidden">
+                        <button class="btn btn-outline" type="submit"><i class="fa-solid fa-eye-slash"></i> Unpublish</button>
+                    </form>
+                    <form th:action="@{/admin/products/{id}/status(id=${product.id})}" method="post" class="inline"
+                          data-confirm="Discontinue this product? It will be removed from the storefront.">
+                        <input type="hidden" name="status" value="discontinued">
+                        <button class="btn btn-outline" type="submit">Discontinue</button>
+                    </form>
+                    <a class="btn btn-ghost" th:href="@{/shop/product/{code}(code=${product.productCode})}" target="_blank">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> View on store
+                    </a>
+                </div>
+            </div>
+
+            <div class="grid" style="grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start;">
+
+                <div class="stack-4">
+
+                    <!-- Details -->
+                    <section class="card">
+                        <div class="card-head"><h2>Details</h2></div>
+                        <div class="card-body">
+                            <form th:action="@{/admin/products/{id}/edit(id=${product.id})}" method="post" data-protect>
+                                <div class="form-grid">
+                                    <div class="field span-2">
+                                        <label for="name">Name <span class="req">*</span></label>
+                                        <input class="input" type="text" id="name" name="name"
+                                               th:value="${product.name}" required>
+                                    </div>
+                                    <div class="field">
+                                        <label for="brandId">Brand</label>
+                                        <select class="select" id="brandId" name="brandId">
+                                            <option value="">— none —</option>
+                                            <option th:each="b : ${brands}" th:value="${b.id}" th:text="${b.name}"
+                                                    th:selected="${product.brand != null and product.brand.id == b.id}">Brand</option>
+                                        </select>
+                                    </div>
+                                    <div class="field">
+                                        <label for="categoryId">Category</label>
+                                        <select class="select" id="categoryId" name="categoryId">
+                                            <option value="">— none —</option>
+                                            <option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.name}"
+                                                    th:selected="${product.category != null and product.category.id == c.id}">Category</option>
+                                        </select>
+                                    </div>
+                                    <div class="field span-2">
+                                        <label for="description">Description</label>
+                                        <textarea class="textarea" id="description" name="description"
+                                                  th:text="${product.description}"></textarea>
+                                    </div>
+                                    <div class="field">
+                                        <label for="material">Material</label>
+                                        <input class="input" type="text" id="material" name="material"
+                                               th:value="${product.material}">
+                                    </div>
+                                    <div class="field">
+                                        <label for="defaultSellingPrice">Selling price (৳)</label>
+                                        <input class="input" type="number" step="0.01" min="0"
+                                               id="defaultSellingPrice" name="defaultSellingPrice"
+                                               th:value="${product.defaultSellingPrice}">
+                                    </div>
+                                    <div class="field">
+                                        <label for="costPrice">Cost price (৳)</label>
+                                        <input class="input" type="number" step="0.01" min="0"
+                                               id="costPrice" name="costPrice" th:value="${product.costPrice}">
+                                        <span class="hint">Snapshotted onto order items for profit reporting.</span>
+                                    </div>
+                                </div>
+                                <div class="form-actions">
+                                    <button class="btn btn-primary" type="submit"><i class="fa-solid fa-floppy-disk"></i> Save details</button>
+                                </div>
+                            </form>
+                        </div>
+                    </section>
+
+                    <!-- Images -->
+                    <section class="card">
+                        <div class="card-head"><h2>Images</h2></div>
+                        <div class="card-body">
+                            <div class="flex wrap mb-3" th:if="${!#lists.isEmpty(product.images)}"
+                                 style="gap:12px;">
+                                <div th:each="img : ${product.images}" class="center">
+                                    <img th:src="${img.imageUrl}" alt=""
+                                         style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid var(--color-border);">
+                                    <div class="small muted" th:if="${img.isPrimary}">primary</div>
+                                </div>
+                            </div>
+                            <p class="small muted" th:if="${#lists.isEmpty(product.images)}">No images yet.</p>
+                            <form th:action="@{/admin/products/{id}/images(id=${product.id})}" method="post"
+                                  class="flex wrap" style="gap:8px; align-items:flex-end;">
+                                <div class="field grow">
+                                    <label for="imageUrl">Image URL</label>
+                                    <input class="input" type="text" id="imageUrl" name="imageUrl" required
+                                           placeholder="/images/products/example.svg">
+                                </div>
+                                <label class="check"><input type="checkbox" name="primary" value="true"> Primary</label>
+                                <button class="btn btn-outline" type="submit">Add image</button>
+                            </form>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="stack-4">
+
+                    <!-- Variants -->
+                    <section class="card">
+                        <div class="card-head">
+                            <h2>Variants (SKUs)</h2>
+                            <span class="card-sub">Stock is managed on the inventory screens, not here</span>
+                        </div>
+                        <div class="table-wrap">
+                            <table class="data">
+                                <thead>
+                                <tr>
+                                    <th>SKU</th><th>Size</th><th>Color</th>
+                                    <th class="num">Price override</th><th></th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="v : ${product.variants}">
+                                    <td data-label="SKU" class="mono" th:text="${v.sku}">SKU</td>
+                                    <td data-label="Size" th:text="${v.size != null ? v.size.sizeName : '—'}">M</td>
+                                    <td data-label="Color" th:text="${v.color != null ? v.color.colorName : '—'}">Black</td>
+                                    <td data-label="Price override" class="num"
+                                        th:text="${v.sellingPrice != null} ? '৳' + ${v.sellingPrice} : 'default'">default</td>
+                                    <td data-label="" class="right">
+                                        <form th:action="@{/admin/variants/{id}/delete(id=${v.id})}" method="post"
+                                              class="inline" data-confirm="Delete variant ${v.sku}? This cannot be undone.">
+                                            <input type="hidden" name="productId" th:value="${product.id}">
+                                            <button class="btn btn-ghost btn-sm" type="submit" title="Delete variant">
+                                                <i class="fa-solid fa-xmark"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(product.variants)}">
+                                    <td colspan="5" class="center muted" style="padding:24px;">
+                                        No variants — a product cannot be sold without at least one SKU.
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card-body" style="border-top:1px solid var(--color-border);">
+                            <div class="section-title">Add variant</div>
+                            <form th:action="@{/admin/products/{id}/variants(id=${product.id})}" method="post">
+                                <div class="form-grid">
+                                    <div class="field">
+                                        <label for="sizeId">Size</label>
+                                        <select class="select" id="sizeId" name="sizeId">
+                                            <option value="">—</option>
+                                            <option th:each="s : ${sizes}" th:value="${s.id}" th:text="${s.sizeName}">M</option>
+                                        </select>
+                                    </div>
+                                    <div class="field">
+                                        <label for="colorId">Color</label>
+                                        <select class="select" id="colorId" name="colorId">
+                                            <option value="">—</option>
+                                            <option th:each="c : ${colors}" th:value="${c.id}" th:text="${c.colorName}">Black</option>
+                                        </select>
+                                    </div>
+                                    <div class="field">
+                                        <label for="sku">SKU</label>
+                                        <input class="input" type="text" id="sku" name="sku" placeholder="auto">
+                                    </div>
+                                    <div class="field">
+                                        <label for="sellingPrice">Price override (৳)</label>
+                                        <input class="input" type="number" step="0.01" min="0"
+                                               id="sellingPrice" name="sellingPrice">
+                                    </div>
+                                    <div class="field">
+                                        <label for="weight">Weight (g)</label>
+                                        <input class="input" type="number" step="1" min="0" id="weight" name="weight">
+                                    </div>
+                                </div>
+                                <div class="form-actions">
+                                    <button class="btn btn-accent" type="submit"><i class="fa-solid fa-plus"></i> Add variant</button>
+                                </div>
+                            </form>
+                        </div>
+                    </section>
+
+                    <!-- Size chart -->
+                    <section class="card">
+                        <div class="card-head"><h2>Size chart measurements</h2></div>
+                        <div class="table-wrap" th:if="${!#lists.isEmpty(product.measurements)}">
+                            <table class="data">
+                                <thead>
+                                <tr><th>Section</th><th>Size</th><th>Measurement</th><th class="num">Value</th></tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="m : ${product.measurements}">
+                                    <td data-label="Section" th:text="${m.garmentSection}">Shirt</td>
+                                    <td data-label="Size" th:text="${m.size.sizeName}">M</td>
+                                    <td data-label="Measurement" th:text="${m.measurementName}">Length</td>
+                                    <td data-label="Value" class="num"
+                                        th:text="${m.measurementValue} + ' ' + ${m.unit}">38 inch</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="empty" th:if="${#lists.isEmpty(product.measurements)}">
+                            <i class="fa-solid fa-ruler-combined"></i>
+                            <strong>No measurements yet</strong>
+                            <p>Size chart data is managed through data migration.</p>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+
+        <th:block th:replace="~{admin/fragments :: bottomNav('products')}"></th:block>
+    </div>
+</div>
+<th:block th:replace="~{admin/fragments :: scripts}"></th:block>
+</body>
+</html>

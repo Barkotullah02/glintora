@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('My Orders')}"></head>
+<body>
+
+<div th:replace="~{layout :: header}"></div>
+
+<div class="container" style="padding-top:48px; padding-bottom:96px; max-width:900px;">
+    <p class="eyebrow">Your account</p>
+    <h1 class="page-title">My Orders</h1>
+
+    <div th:if="${orders.isEmpty()}" class="panel" style="text-align:center; padding:80px 24px;">
+        <p class="text-soft" style="margin-bottom:24px;">You have no orders yet.</p>
+        <a th:href="@{/shop}" class="btn btn-primary">Start shopping</a>
+    </div>
+
+    <div class="panel" style="margin-bottom:16px; padding:24px;" th:each="order : ${orders}">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;">
+            <div>
+                <div style="font-size:14.5px; font-weight:500;" th:text="'Order #' + ${order.id}">Order #1</div>
+                <div class="text-faint" style="font-size:12.5px;"
+                     th:text="${#temporals.format(order.orderDate, 'dd MMM yyyy, hh:mm a')}">date</div>
+            </div>
+            <div style="text-align:right;">
+                <span class="status-pill" th:classappend="${order.status.name()}" th:text="${order.status}">pending</span>
+                <div style="font-size:15px; font-weight:500; margin-top:6px;"
+                     th:text="'৳' + ${#numbers.formatDecimal(order.grandTotal, 1, 'COMMA', 2, 'POINT')}">৳0</div>
+            </div>
+        </div>
+        <div style="border-top:var(--hairline); margin-top:16px; padding-top:12px;">
+            <div class="text-soft" style="font-size:13px; display:flex; justify-content:space-between; gap:16px;"
+                 th:each="item : ${order.items}">
+                <span>
+                    <span th:text="${item.variant.product.name}">Product</span>
+                    <span class="text-faint" th:if="${item.variant.size != null}"
+                          th:text="' · ' + ${item.variant.size.sizeName}"></span>
+                    <span class="text-faint" th:text="' × ' + ${item.quantity}"> × 1</span>
+                </span>
+                <span th:text="'৳' + ${#numbers.formatDecimal(item.unitPrice, 1, 'COMMA', 2, 'POINT')}">৳0</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{layout :: footer}"></div>
+<div th:replace="~{layout :: scripts}"></div>
+</body>
+</html>
